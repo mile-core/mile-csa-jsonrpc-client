@@ -3,7 +3,7 @@
 ## Requirements
 1. c++17
 1. cmake
-1. boost >= 1.60.0 installed
+1. boost >= 1.66.0 installed, boost.beast
 1. https://github.com/mile-core/mile-csa-api
 
 
