@@ -58,7 +58,7 @@ Allowed methods:
 ```
     $ ./mile_cli_wallet -m send-transfer -p '{"private-key": "...", "to": "...", "asset-code": 0, amount:"1000", "description": "0x2039949102"}'
 
-##Example 
+## Example 
 
 ```cpp
 
@@ -98,7 +98,7 @@ Allowed methods:
     }
 ```
 
-##Sending tokens example
+## Sending tokens example
 
 ```cpp
 
