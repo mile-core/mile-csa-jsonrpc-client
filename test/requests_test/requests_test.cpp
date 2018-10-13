@@ -37,33 +37,33 @@ struct RequestsEval {
     bool test(const std::string &u = "http://node002.testnet.mile.global/v1/api") {
         if (auto rpc = milecsa::rpc::Client::Connect(u, true, error)) {
 
-            BOOST_TEST_MESSAGE("Ping : " + StringFormat("%l", *rpc->ping(response)));
+            BOOST_TEST_MESSAGE("Ping : " + StringFormat("%l", *rpc->ping(response, error)));
 
             auto last_block_id = *rpc->get_current_block_id(response);
             BOOST_TEST_MESSAGE(" -- ");
             BOOST_TEST_MESSAGE("Id   : " + UInt256ToDecString(last_block_id));
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Info : " + rpc->get_blockchain_info(response)->dump());
+            BOOST_TEST_MESSAGE("Info : " + rpc->get_blockchain_info(response, error)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("State: " + rpc->get_blockchain_state(response)->dump());
+            BOOST_TEST_MESSAGE("State: " + rpc->get_blockchain_state(response, error)->dump());
 
             auto pk = "EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx";
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Wallet: " + rpc->get_wallet_state(pk, response)->dump());
+            BOOST_TEST_MESSAGE("Wallet: " + rpc->get_wallet_state(pk, response, error)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Trxs  : " + rpc->get_wallet_transactions(pk, 5, response)->dump());
+            BOOST_TEST_MESSAGE("Trxs  : " + rpc->get_wallet_transactions(pk, 5, response, error)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("NW State: " + rpc->get_network_state(response)->dump());
+            BOOST_TEST_MESSAGE("NW State: " + rpc->get_network_state(response, error)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("NW Nodes: " + rpc->get_nodes(response)->dump());
+            BOOST_TEST_MESSAGE("NW Nodes: " + rpc->get_nodes(response, error)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Block: " + rpc->get_block(last_block_id, response)->dump());
+            BOOST_TEST_MESSAGE("Block: " + rpc->get_block(last_block_id, response, error)->dump());
 
             return true;
         }
