@@ -3,7 +3,7 @@
 ## Requirements
 1. c++17
 1. cmake
-1. boost >= 1.66.0 installed, boost.beast
+1. boost >= 1.66.0 installed, boost.beast (do not update to 1.68!)
 1. https://github.com/mile-core/mile-csa-api
 
 
@@ -19,7 +19,7 @@
 
 ## Boost updates (if it needs)
 
-    $ wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+    $ wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz
     $ tar -xzf boost_1_*
     $ cd boost_1_*
     $ ./bootstrap.sh --prefix=/usr
