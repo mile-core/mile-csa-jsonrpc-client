@@ -19,7 +19,7 @@
 
 ## Boost updates (if it needs)
 
-    $ wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
+    $ wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
     $ tar -xzf boost_1_*
     $ cd boost_1_*
     $ ./bootstrap.sh --prefix=/usr
