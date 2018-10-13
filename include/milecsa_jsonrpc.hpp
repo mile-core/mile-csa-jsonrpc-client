@@ -1,5 +1,4 @@
-#ifndef MILE_JSONRPC_CSA_API_LIBRARY_H
-#define MILE_JSONRPC_CSA_API_LIBRARY_H
+#pragma once
 
 #include <optional>
 #include <functional>
@@ -8,33 +7,15 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/beast/http.hpp>
 
-#include "json.hpp"
 #include "milecsa.hpp"
-#include "milecsa_jsonrpc.hpp"
 #include "milecsa_url.hpp"
+#include "milecsa_rpc_session.hpp"
 
 namespace milecsa {
 
-    namespace http {
-        typedef boost::beast::http::response<boost::beast::http::string_body> response;
-        typedef std::function<void(const response &response)> ResponseHandler;
-        static auto default_response_handler = [](const response &response) {};
-    }
-
-    namespace rpc {
-        using json = nlohmann::json ;
-        typedef std::optional<json> response;
-        typedef json request;
-    }
-
-    namespace rpc {
-        static const std::string version = "v1.0";
-        static const std::string user_agent = "MILE CLI Wallet" + version;
-    }
-
     namespace rpc {
 
-        namespace detail { class session; }
+        namespace detail { class RpcSession; }
 
         /**
          * MILE Json-Rpc client
@@ -42,11 +23,6 @@ namespace milecsa {
         class Client {
 
         public:
-
-            /**
-             * Global debug option
-             */
-            static bool debug_on;
 
             /**
              * Create MILE json-rpc client controller
@@ -73,14 +49,17 @@ namespace milecsa {
              * @param handler - response failure handler
              * @return interval between start request and response finish in microseconds
              */
-            std::optional<time_t> ping(const http::ResponseHandler &handler = http::default_response_handler) const;
+            std::optional<time_t> ping(const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get the last block id of the MILE network
              * @param handler - response failure handler
              * @return current block id, that is need to build any transactions
              */
-            std::optional<uint256_t> get_current_block_id(const http::ResponseHandler &handler = http::default_response_handler) const;
+            std::optional<uint256_t> get_current_block_id(
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get blockchain network state
@@ -88,7 +67,9 @@ namespace milecsa {
              * @return count of consensuse nodes. responses object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_network_state(const http::ResponseHandler &handler = http::default_response_handler) const;
+            response get_network_state(
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get consensus node list
@@ -96,7 +77,9 @@ namespace milecsa {
              * @return  blockchain nodes info in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_nodes(const http::ResponseHandler &handler = http::default_response_handler) const;
+            response get_nodes(
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get blockchain info
@@ -104,7 +87,9 @@ namespace milecsa {
              * @return blockchain info in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_blockchain_info(const http::ResponseHandler &handler = http::default_response_handler) const;
+            response get_blockchain_info(
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get the current blockchain state
@@ -112,7 +97,9 @@ namespace milecsa {
              * @return blockchain state structure in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_blockchain_state(const http::ResponseHandler &handler = http::default_response_handler) const;
+            response get_blockchain_state(
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                    const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get block by id
@@ -121,7 +108,9 @@ namespace milecsa {
              * @return block structure in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_block(uint256_t id, const http::ResponseHandler &handler = http::default_response_handler) const;
+            response get_block(uint256_t id,
+                    const http::ResponseHandler &handler = http::default_response_handler,
+                               const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get wallet state by public key
@@ -131,7 +120,8 @@ namespace milecsa {
              * @see https://github.com/nlohmann/json
              */
             response get_wallet_state(const std::string &publicKey,
-                                      const http::ResponseHandler &handler = http::default_response_handler) const;
+                                      const http::ResponseHandler &handler = http::default_response_handler,
+                                      const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get wallet last transactions
@@ -143,7 +133,8 @@ namespace milecsa {
              */
             response get_wallet_transactions(const std::string &publicKey,
                                              const unsigned int limit = 1,
-                                             const http::ResponseHandler &handler = http::default_response_handler) const;
+                                             const http::ResponseHandler &handler = http::default_response_handler,
+                                             const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get wallet state
@@ -153,7 +144,8 @@ namespace milecsa {
              * @see https://github.com/nlohmann/json
              */
             response get_wallet_state(const milecsa::keys::Pair &pair,
-                                      const http::ResponseHandler &handler = http::default_response_handler) const;
+                                      const http::ResponseHandler &handler = http::default_response_handler,
+                                      const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Get wallet last transactions
@@ -165,7 +157,8 @@ namespace milecsa {
              */
             response get_wallet_transactions(const milecsa::keys::Pair &pair,
                                              const unsigned int limit = 1,
-                                             const http::ResponseHandler &handler = http::default_response_handler) const;
+                                             const http::ResponseHandler &handler = http::default_response_handler,
+                                             const ErrorHandler &error = default_error_handler) const;
 
             /**
              * Send user defined transaction. Transaction can be prepared by milecsa::transaction::Request<nlohmann::json>
@@ -178,7 +171,8 @@ namespace milecsa {
              */
             response send_transaction(const milecsa::keys::Pair &pair,
                                       json transactionData,
-                                      const http::ResponseHandler &handler = http::default_response_handler) const;
+                                      const http::ResponseHandler &handler = http::default_response_handler,
+                                      const ErrorHandler &error = default_error_handler) const;
             /**
              * Run rpc method by name with parameters
              * @param method - method name
@@ -195,16 +189,10 @@ namespace milecsa {
             Client(const Url &url, bool verify_ssl);
             Client():verify_ssl_(true){};
 
-            json next_command(const std::string &method) const;
-
             const std::optional<Url> url_;
 
             bool verify_ssl_;
-            std::shared_ptr<detail::session> session;
-
-            static const json jsonrpc_core_;
+            std::shared_ptr<detail::RpcSession> session;
         };
     }
 }
-
-#endif

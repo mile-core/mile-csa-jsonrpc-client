@@ -152,7 +152,7 @@ static bool parse_cmdline(int ac, char *av[]) {
         }
 
         if (vm.count("debug")) {
-            milecsa::rpc::Client::debug_on = true;
+            milecsa::rpc::detail::RpcSession::debug_on = true;
         }
     }
 

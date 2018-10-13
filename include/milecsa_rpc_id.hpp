@@ -2,17 +2,24 @@
 // Created by denn on 04/10/2018.
 //
 
-#ifndef MILECSA_JSONRPC_MILECSA_ID_COUNTER_HPP
-#define MILECSA_JSONRPC_MILECSA_ID_COUNTER_HPP
+#pragma once
 
 namespace milecsa {
     namespace rpc {
 
         template <typename T>
+        /**
+         * Singleton ID counter
+         * @tparam T
+         * */
         class IdCounter {
 
         public:
 
+            /**
+             * Get next ID
+             * @return next ID
+             */
             T get_next() {
                 return id_++;
             }
@@ -40,5 +47,3 @@ namespace milecsa {
         };
     }
 }
-
-#endif //MILECSA_JSONRPC_MILECSA_ID_COUNTER_HPP

@@ -2,8 +2,7 @@
 // Created by denn on 05/10/2018.
 //
 
-#ifndef MILECSA_JSONRPC_MILECSA_URL_HPP
-#define MILECSA_JSONRPC_MILECSA_URL_HPP
+#pragma once
 
 #include <optional>
 #include <string>
@@ -103,6 +102,3 @@ namespace milecsa {
         };
     }
 }
-
-
-#endif //MILECSA_JSONRPC_MILECSA_URL_HPP

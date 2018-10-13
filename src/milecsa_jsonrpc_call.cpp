@@ -3,7 +3,7 @@
 //
 
 #include "milecsa_jsonrpc.hpp"
-#include "milecsa_id_counter.hpp"
+#include "milecsa_rpc_id.hpp"
 #include "crypto_types.h"
 
 namespace milecsa {
