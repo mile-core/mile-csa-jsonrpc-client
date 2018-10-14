@@ -212,8 +212,9 @@ namespace milecsa {
                         }
                         if (status == boost::beast::http::status::ok) {
                             auto json = json::parse(res.body().data());
-                            if (json.count("result") > 0)
+                            if (json.count("result") > 0 && json["result"] != nullptr){
                                 return json;
+                            }
                         }
 
                         handler(res);
