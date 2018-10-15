@@ -4,46 +4,44 @@
 
 #pragma once
 
-namespace milecsa {
-    namespace rpc {
+namespace milecsa::rpc {
 
-        template <typename T>
+    template <typename T>
+    /**
+     * Singleton ID counter
+     * @tparam T
+     * */
+    class IdCounter {
+
+    public:
+
         /**
-         * Singleton ID counter
-         * @tparam T
-         * */
-        class IdCounter {
+         * Get next ID
+         * @return next ID
+         */
+        T get_next() {
+            return id_++;
+        }
 
-        public:
+    public:
 
-            /**
-             * Get next ID
-             * @return next ID
-             */
-            T get_next() {
-                return id_++;
-            }
+        static IdCounter& Instance() {
+            static IdCounter myInstance;
+            return myInstance;
+        }
 
-        public:
+        IdCounter(IdCounter const&) = delete;             // Copy construct
+        IdCounter(IdCounter&&) = delete;                  // Move construct
+        IdCounter& operator=(IdCounter const&) = delete;  // Copy assign
+        IdCounter& operator=(IdCounter &&) = delete;      // Move assign
 
-            static IdCounter& Instance() {
-                static IdCounter myInstance;
-                return myInstance;
-            }
+    protected:
+        IdCounter():id_((T)0) {
+        }
+        ~IdCounter() {}
 
-            IdCounter(IdCounter const&) = delete;             // Copy construct
-            IdCounter(IdCounter&&) = delete;                  // Move construct
-            IdCounter& operator=(IdCounter const&) = delete;  // Copy assign
-            IdCounter& operator=(IdCounter &&) = delete;      // Move assign
+    private:
+        T id_;
 
-        protected:
-            IdCounter():id_((T)0) {
-            }
-            ~IdCounter() {}
-
-        private:
-            T id_;
-
-        };
-    }
+    };
 }

@@ -64,17 +64,17 @@ Allowed methods:
 
     #include "milecsa_jsonrpc.hpp"
 
-    milecsa::ErrorHandler error = [](milecsa::result code, const std::string &error){
+    milecsa::ErrorHandler error_handler = [](milecsa::result code, const std::string &error){
         BOOST_TEST_MESSAGE("Request Error: " + error);
     };
 
-    milecsa::http::ResponseHandler response = [&](const milecsa::http::response &http){
+    milecsa::http::ResponseHandler response_fial_handler = [&](const milecsa::http::response &http){
         std::cerr << "Response error: " << http.result() << std::endl << http << std::endl;
     };
     
     auto u = "http://node.testnet.mile.global/v1/api";
     
-    if (auto rpc = milecsa::rpc::Client::Connect(u, true, response, error)) {
+    if (auto rpc = milecsa::rpc::Client::Connect(u, true, response_fial_handler, error_handler)) {
 
             std::count << *rpc->ping()) << endl;
 
@@ -116,7 +116,7 @@ Allowed methods:
                 //
                 // restore wallet pair from private key
                 //
-                auto ppk = milecsa::keys::Pair::FromPrivateKey("...",error);
+                auto ppk = milecsa::keys::Pair::FromPrivateKey("...",error_handler);
 
                 if (!ppk) {
                     //
@@ -145,7 +145,7 @@ Allowed methods:
                         amount,     // amount
                         description,// description
                         "",         // fee, can be skiped 
-                        error)->get_body()){
+                        error_handler)->get_body()){
                     
                     //
                     // send prepared and signed transaction

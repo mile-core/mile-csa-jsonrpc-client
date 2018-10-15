@@ -18,8 +18,8 @@ struct RequestsEval {
         BOOST_TEST_MESSAGE("Request Error: " + error);
     };
 
-    milecsa::http::ResponseHandler response_handler = [&](const milecsa::http::response &http){
-        std::cerr << "Response error: " << http.result() << std::endl << http << std::endl;
+    milecsa::http::ResponseHandler response_handler = [&](const milecsa::http::status code, const std::string &method, const milecsa::http::response &http){
+        std::cerr << "Response["<<code<<"] "<<method<<" error: " << http.result() << std::endl << http << std::endl;
     };
 
     bool getzeroblock(const std::string &u = "http://node002.testnet.mile.global/v1/api") {
