@@ -68,9 +68,12 @@ Allowed methods:
         BOOST_TEST_MESSAGE("Request Error: " + error);
     };
 
-    milecsa::http::ResponseHandler response_fial_handler = [&](const milecsa::http::response &http){
-        std::cerr << "Response error: " << http.result() << std::endl << http << std::endl;
-    };
+    milecsa::http::ResponseHandler response_fail_handler = [](
+              const milecsa::http::status code,
+              const std::string &method,
+              const milecsa::http::response &http){
+          std::cerr << "Response["<<code<<"] "<<method<<" error: " << http.result() << std::endl << http << std::endl;
+      };
     
     auto u = "http://node.testnet.mile.global/v1/api";
     
