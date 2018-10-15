@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
         exit(-1);
     };
 
-    if (auto rpc = milecsa::rpc::Client::Connect(opt_mile_node_address, true, error)){
+    if (auto rpc = milecsa::rpc::Client::Connect(opt_mile_node_address, true, response, error)){
 
 
         try {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "Params parser error: " << e.what() << "\n";
             }
 
-            auto result = rpc->call(opt_method,params,response,error);
+            auto result = rpc->call(opt_method,params);
 
             if (!result.has_value()) {
                 std::cerr << "Rpc error: nothing response"<< std::endl;

@@ -34,7 +34,8 @@ namespace milecsa {
             static std::optional<Client> Connect(
                     const std::string &urlString,
                     bool verify_ssl = true,
-                    const ErrorHandler &error = default_error_handler);
+                    const http::ResponseHandler &response_handler = http::default_response_handler,
+                    const ErrorHandler &error_handler = default_error_handler);
 
             ~Client(){};
 
@@ -46,153 +47,123 @@ namespace milecsa {
 
             /**
              * Ping jsonrpc node service.
-             * @param handler - response failure handler
              * @return interval between start request and response finish in microseconds
              */
-            std::optional<time_t> ping(const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            std::optional<time_t> ping() const;
 
             /**
              * Get the last block id of the MILE network
-             * @param handler - response failure handler
              * @return current block id, that is need to build any transactions
              */
-            std::optional<uint256_t> get_current_block_id(
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            std::optional<uint256_t> get_current_block_id() const;
 
             /**
              * Get blockchain network state
-             * @param handler - response failure handler
              * @return count of consensuse nodes. responses object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_network_state(
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            response get_network_state() const;
 
             /**
              * Get consensus node list
-             * @param handler - response failure handler
              * @return  blockchain nodes info in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_nodes(
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            response get_nodes() const;
 
             /**
              * Get blockchain info
-             * @param handler - response failure handler
              * @return blockchain info in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_blockchain_info(
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            response get_blockchain_info() const;
 
             /**
              * Get the current blockchain state
-             * @param handler - response failure handler
              * @return blockchain state structure in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_blockchain_state(
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                    const ErrorHandler &error = default_error_handler) const;
+            response get_blockchain_state() const;
 
             /**
              * Get block by id
              * @param id - block id
-             * @param handler - response failure handler
              * @return block structure in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_block(uint256_t id,
-                    const http::ResponseHandler &handler = http::default_response_handler,
-                               const ErrorHandler &error = default_error_handler) const;
+            response get_block(uint256_t id) const;
 
             /**
              * Get wallet state by public key
              * @param publicKey - wallet public key
-             * @param handler - response failure handler
              * @return response object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_wallet_state(const std::string &publicKey,
-                                      const http::ResponseHandler &handler = http::default_response_handler,
-                                      const ErrorHandler &error = default_error_handler) const;
+            response get_wallet_state(const std::string &publicKey) const;
 
             /**
              * Get wallet last transactions
              * @param publicKey - wallet public key
              * @param limit - maximum transaction count
-             * @param handler - response failure handler
              * @return response object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
             response get_wallet_transactions(const std::string &publicKey,
-                                             const unsigned int limit = 1,
-                                             const http::ResponseHandler &handler = http::default_response_handler,
-                                             const ErrorHandler &error = default_error_handler) const;
+                                             const unsigned int limit = 1) const;
 
             /**
              * Get wallet state
              * @param pair - wallet pair
-             * @param handler - response failure handler
              * @return response object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
-            response get_wallet_state(const milecsa::keys::Pair &pair,
-                                      const http::ResponseHandler &handler = http::default_response_handler,
-                                      const ErrorHandler &error = default_error_handler) const;
+            response get_wallet_state(const milecsa::keys::Pair &pair) const;
 
             /**
              * Get wallet last transactions
              * @param pair - wallet pair
              * @param limit - maximum transaction count
-             * @param handler - response failure handler
              * @return response object in nlohmann json style
              * @see https://github.com/nlohmann/json
              */
             response get_wallet_transactions(const milecsa::keys::Pair &pair,
-                                             const unsigned int limit = 1,
-                                             const http::ResponseHandler &handler = http::default_response_handler,
-                                             const ErrorHandler &error = default_error_handler) const;
+                                             const unsigned int limit = 1) const;
 
             /**
              * Send user defined transaction. Transaction can be prepared by milecsa::transaction::Request<nlohmann::json>
              * @param pair - wallet pair
              * @param transactionData - transaction data
-             * @param handler - response failure handler
              * @return response object in nlohmann json style
              * @see https://github.com/nlohmann/json
              * @see milecsa::transaction::Request<nlohmann::json>
              */
             response send_transaction(const milecsa::keys::Pair &pair,
-                                      json transactionData,
-                                      const http::ResponseHandler &handler = http::default_response_handler,
-                                      const ErrorHandler &error = default_error_handler) const;
+                                      json transactionData) const;
             /**
              * Run rpc method by name with parameters
              * @param method - method name
              * @param params - json-rpc params
-             * @param handler - response failure handler
              * @return rpc object respons
              */
             std::any call(const std::string &method,
-                          const request &params,
-                          const http::ResponseHandler &handler = http::default_response_handler,
-                          const ErrorHandler &error = default_error_handler) const;
+                          const request &params) const;
 
         private:
-            Client(const Url &url, bool verify_ssl);
-            Client():verify_ssl_(true){};
+            Client(const Url &url,
+                   bool verify_ssl,
+                   const http::ResponseHandler &response_handler = http::default_response_handler,
+                   const ErrorHandler &error_handler = default_error_handler);
+            Client():verify_ssl_(true),
+                     response_handler(http::default_response_handler),
+                     error_handler(default_error_handler){};
 
             const std::optional<Url> url_;
 
             bool verify_ssl_;
             std::shared_ptr<detail::RpcSession> session;
+
+            http::ResponseHandler response_handler;
+            ErrorHandler error_handler;
         };
     }
 }
