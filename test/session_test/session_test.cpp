@@ -18,9 +18,11 @@ static const nlohmann::json tests = R"([
   {"method": "get-block",                "params": {"id":2}},
   {"method": "get-network-state",        "params": {}},
   {"method": "get-nodes",                "params": {"first-id":0, "limit":3}},
+  {"method": "get-transaction-history-state","params":{}},
+  {"method": "get-transaction-history",  "params": {"first-id":100,"limit":10}},
   {"method": "get-transaction-info",     "params": {"public-key":"111111111111111111111111111111115RyRTN", "id":10}},
-  {"method": "get-wallet-history-blocks","params": {"public-key":"zVG4iPaggWUUaDEkyEyFBv8dNYSaFMm2C7WS8nSMKWLsSh9x", "first-id": 0, "limit": 2}},
   {"method": "get-wallet-history-state", "params": {"public-key":"2cv1HqiCE8BeHc4Y7vucckMysx3PV7KND2mQiMdXqDJg812Fd5"}},
+  {"method": "get-wallet-history-blocks","params": {"public-key":"zVG4iPaggWUUaDEkyEyFBv8dNYSaFMm2C7WS8nSMKWLsSh9x", "first-id": 0, "limit": 2}},
   {"method": "get-wallet-history-transactions", "params": {"public-key":"2cv1HqiCE8BeHc4Y7vucckMysx3PV7KND2mQiMdXqDJg812Fd5", "first-id": 0, "limit": 3}}
 ])"_json;
 
@@ -63,7 +65,7 @@ struct SessionEval {
         return nullptr;
     }
 
-    bool run_all_test(const std::string &u = "http://127.0.0.1:9998/v1/api"){
+    bool run_tests(const std::string &input_method="", const std::string &u = "http://127.0.0.1:9998/v1/api"){
         try {
             if (tests.is_discarded()){
                 return false;
@@ -71,6 +73,10 @@ struct SessionEval {
 
             for (auto& element : tests) {
                 std::string method = element["method"];
+
+                if (!input_method.empty() && method!=input_method)
+                    continue;
+
                 nlohmann::json params = element["params"];
 
                 if (auto session = get_session(u)){
@@ -100,7 +106,62 @@ struct SessionEval {
 };
 
 
-BOOST_FIXTURE_TEST_CASE( rpc_session, SessionEval )
+BOOST_FIXTURE_TEST_CASE( help, SessionEval )
 {
-    BOOST_CHECK(run_all_test());
+    BOOST_CHECK(run_tests("help"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_block_history_state, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-block-history-state"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_block_history, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-block-history"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_block, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-block"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_network_state, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-network-state"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_nodes, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-nodes"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_transaction_history_state, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-transaction-history-state"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_transaction_history, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-transaction-history"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_transaction_info, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-transaction-info"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_wallet_history_state, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-wallet-history-state"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_wallet_history_blocks, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-wallet-history-blocks"));
+}
+
+BOOST_FIXTURE_TEST_CASE( get_wallet_history_transactions, SessionEval )
+{
+    BOOST_CHECK(run_tests("get-wallet-history-transactions"));
 }
