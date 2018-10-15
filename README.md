@@ -74,27 +74,27 @@ Allowed methods:
     
     auto u = "http://node.testnet.mile.global/v1/api";
     
-    if (auto rpc = milecsa::rpc::Client::Connect(u, true, error)) {
+    if (auto rpc = milecsa::rpc::Client::Connect(u, true, response, error)) {
 
-            std::count << *rpc->ping(response, error)) << endl;
+            std::count << *rpc->ping()) << endl;
 
-            auto last_block_id = *rpc->get_current_block_id(response, error);
+            auto last_block_id = *rpc->get_current_block_id();
             cout << + UInt256ToDecString(last_block_id) << endl;
 
-            cout << rpc->get_blockchain_info(response, error)->dump()) << endl;
+            cout << rpc->get_blockchain_info()->dump()) << endl;
 
-            cout << rpc->get_blockchain_state(response, error)->dump()) << endl;
+            cout << rpc->get_blockchain_state()->dump()) << endl;
 
             auto pk = "EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx";
-            cout << rpc->get_wallet_state(pk, response, error)->dump()) << endl;
+            cout << rpc->get_wallet_state(pk)->dump()) << endl;
 
-            cout << rpc->get_wallet_transactions(pk, 5, response, error)->dump()) << endl;
+            cout << rpc->get_wallet_transactions(pk, 5)->dump()) << endl;
 
-            cout << rpc->get_network_state(response, error)->dump()) << endl;
+            cout << rpc->get_network_state()->dump()) << endl;
 
-            cout << rpc->get_nodes(response, error)->dump()) << endl;
+            cout << rpc->get_nodes()->dump()) << endl;
 
-            cout << rpc->get_block(last_block_id, response, error)->dump()) << endl;
+            cout << rpc->get_block(last_block_id)->dump()) << endl;
     }
 ```
 
@@ -111,7 +111,7 @@ Allowed methods:
                 //
                 // you must to get current block id
                 //
-                auto block_id = *rpc->get_current_block_id(handler);
+                auto block_id = *rpc->get_current_block_id();
 
                 //
                 // restore wallet pair from private key
@@ -150,7 +150,7 @@ Allowed methods:
                     //
                     // send prepared and signed transaction
                     //                   
-                    if(auto t = rpc->send_transaction(*ppk,*trx_body,handler, error)){
+                    if(auto t = rpc->send_transaction(*ppk,*trx_body)){
                         return std::any_cast<rpc::response>(t);
                     }
                 }
