@@ -22,12 +22,22 @@ namespace milecsa::rpc::detail {
             resolver(0),
             socket(0),
             stream(0) {
+        prepare();
+    }
 
+    bool RpcSession::reconnect(const milecsa::ErrorHandler &error) {
+        if (prepare()){
+            return connect(error);
+        }
+        return false;
+    }
+
+    bool RpcSession::prepare() {
         if (use_ssl){
             ssl::context ctx{ssl::context::tls_client};
             ctx.set_options(ssl::context::sslv23_client|ssl::context::tlsv12_client);
 
-            if (verify) {
+            if (verify_ssl) {
                 ctx.set_verify_mode(ssl::verify_client_once);
             }
             else {
@@ -41,6 +51,8 @@ namespace milecsa::rpc::detail {
         }
 
         resolver = new tcp::resolver(ioc);
+
+        return  resolver != nullptr;
     }
 
     bool RpcSession::connect(const milecsa::ErrorHandler &error) {

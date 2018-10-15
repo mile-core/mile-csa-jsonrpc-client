@@ -110,7 +110,14 @@ namespace milecsa {
                  * @param error
                  * @return false in case when conection failed
                  */
-                bool connect(const milecsa::ErrorHandler &error) ;
+                bool connect(const milecsa::ErrorHandler &error);
+
+                /**
+                 * Reconnect session in handle error
+                 * @param error
+                 * @return
+                 */
+                bool reconnect(const milecsa::ErrorHandler &error) ;
 
                 /**
                  * Send JSON-RPC request width request body
@@ -146,6 +153,7 @@ namespace milecsa {
                 tcp::socket   *socket;
                 ssl::stream<tcp::socket> *stream;
 
+                bool prepare();
             };
         }
     }

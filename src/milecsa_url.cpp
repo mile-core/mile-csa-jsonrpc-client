@@ -12,6 +12,17 @@
 
 namespace milecsa::rpc {
 
+    Url& Url::operator=(const Url &u){
+        url_string_=u.url_string_;
+        protocol_=u.protocol_;
+        domain_=u.domain_;
+        port_=u.port_;
+        path_=u.path_;
+        query_=u.query_;
+
+        return  *this;
+    }
+
     Url::Url(const milecsa::rpc::Url &u):
             url_string_(u.url_string_),
             protocol_(u.protocol_),

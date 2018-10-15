@@ -15,6 +15,7 @@
 static std::string opt_mile_node_address = "http://node002.testnet.mile.global/v1/api";
 static std::string opt_method= "";
 static std::string opt_method_params = "{}";
+static int opt_reconnections = 3;
 
 namespace po = boost::program_options;
 
@@ -26,58 +27,76 @@ int main(int argc, char *argv[]) {
     if (!parse_cmdline(argc, argv))
         return 1;
 
-    auto error_handler = [](
-            milecsa::result code,
-            const std::string &error){
-        std::cerr << "Call error: " << error << std::endl;
-        exit(-1);
+    milecsa::http::ResponseHandler response_fail_handler;
+    milecsa::ErrorHandler error_handler;
+    int reconnections = 0;
+
+    auto do_request = [&]{
+        if (auto rpc = milecsa::rpc::Client::Connect(
+                opt_mile_node_address,
+                true,
+                response_fail_handler,
+                error_handler)){
+
+            try {
+                nlohmann::json params;
+                try {
+                    params = nlohmann::json::parse(opt_method_params);
+                }
+                catch (std::exception &e) {
+                    std::cerr << "Params parser error: " << e.what() << "\n";
+                }
+
+                auto result = rpc->call(opt_method,params);
+
+                if (!result.has_value()) {
+                    std::cerr << "Rpc error: response does not have any result"<< std::endl;
+                    exit(-1);
+                }
+
+                std::cout<< "Call " << opt_method << ": ";
+
+                if (result.type() == typeid(time_t))
+                    std::cout << std::any_cast<time_t>(result);
+
+
+                else if (result.type() == typeid(uint256_t)){
+                    std::cout << std::any_cast<uint256_t>(result);
+                }
+
+                else if (result.type() == typeid(milecsa::rpc::response)){
+                    std::cout << std::any_cast<milecsa::rpc::response>(result)->dump();
+                }
+
+                std::cout << std::endl;
+            }
+            catch (std::exception &e) {
+                std::cerr << "Method error: " << e.what() << "\n";
+            }
+        }
     };
 
-    milecsa::http::ResponseHandler response_fail_handler = [](
+    response_fail_handler = [](
             const milecsa::http::status code,
             const std::string &method,
             const milecsa::http::response &http){
         std::cerr << "Response["<<code<<"] "<<method<<" error: " << http.result() << std::endl << http << std::endl;
     };
 
-    if (auto rpc = milecsa::rpc::Client::Connect(opt_mile_node_address, true, response_fail_handler, error_handler)){
+    error_handler = [&](
+            milecsa::result code,
+            const std::string &error){
+        std::cerr << "Call ["<<reconnections<<"] error: " << error << std::endl;
 
-        try {
-            nlohmann::json params;
-            try {
-                params = nlohmann::json::parse(opt_method_params);
-            }
-            catch (std::exception &e) {
-                std::cerr << "Params parser error: " << e.what() << "\n";
-            }
-
-            auto result = rpc->call(opt_method,params);
-
-            if (!result.has_value()) {
-                std::cerr << "Rpc error: response does not have any result"<< std::endl;
-                exit(-1);
-            }
-
-            std::cout<< "Call " << opt_method << ": ";
-
-            if (result.type() == typeid(time_t))
-                std::cout << std::any_cast<time_t>(result);
-
-
-            else if (result.type() == typeid(uint256_t)){
-                std::cout << std::any_cast<uint256_t>(result);
-            }
-
-            else if (result.type() == typeid(milecsa::rpc::response)){
-                std::cout << std::any_cast<milecsa::rpc::response>(result)->dump();
-            }
-
-            std::cout << std::endl;
+        if (++reconnections >= opt_reconnections ) {
+            exit(-1);
         }
-        catch (std::exception &e) {
-            std::cerr << "Method error: " << e.what() << "\n";
-        }
-    }
+
+        do_request();
+    };
+
+    do_request();
+
     exit(0);
 }
 
@@ -108,6 +127,10 @@ static bool parse_cmdline(int ac, char *av[]) {
                 ("params,p", po::value<std::string>(&opt_method_params)->
                          default_value(opt_method_params),
                  "blockchain params")
+
+                ("reconnections,r", po::value<int>(&opt_reconnections)->
+                         default_value(opt_reconnections),
+                 "try to connect again reconnection times if any connection error occurred")
                 ;
 
         std::string ext = ""\

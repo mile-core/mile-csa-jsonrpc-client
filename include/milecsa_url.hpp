@@ -87,11 +87,13 @@ namespace milecsa::rpc {
          */
         const std::string &get_fragment() const { return fragment_;}
 
+        Url& operator=(const Url&);
+
     private:
         Url(const std::string &urlString);
         Url(){};
 
-        const std::string url_string_;
+        std::string url_string_;
         protocol protocol_;
         std::string domain_;
         uint16_t port_;

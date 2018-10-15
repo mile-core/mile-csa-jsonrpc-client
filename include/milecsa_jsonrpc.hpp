@@ -38,6 +38,7 @@ namespace milecsa {
                     const http::ResponseHandler &response_fail_handler = http::default_response_handler,
                     const ErrorHandler &error_handler = default_error_handler);
 
+            Client(const Client &client);
             ~Client(){};
 
             /**
@@ -149,6 +150,8 @@ namespace milecsa {
             std::any call(const std::string &method,
                           const request &params) const;
 
+            Client& operator=(const Client&);
+
         private:
 
             Client(const Url &url,
@@ -160,8 +163,7 @@ namespace milecsa {
                      response_fail_handler(http::default_response_handler),
                      error_handler(default_error_handler){};
 
-            const std::optional<Url> url_;
-
+            std::optional<Url> url_;
             bool verify_ssl_;
             std::shared_ptr<detail::RpcSession> session;
 
