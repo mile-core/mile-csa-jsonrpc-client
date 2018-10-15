@@ -77,7 +77,7 @@ Allowed methods:
     
     auto u = "http://node.testnet.mile.global/v1/api";
     
-    if (auto rpc = milecsa::rpc::Client::Connect(u, true, response_fial_handler, error_handler)) {
+    if (auto rpc = milecsa::rpc::Client::Connect(u, true, response_fail_handler, error_handler)) {
 
             std::count << *rpc->ping()) << endl;
 
