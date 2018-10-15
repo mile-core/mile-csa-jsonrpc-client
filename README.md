@@ -76,25 +76,25 @@ Allowed methods:
     
     if (auto rpc = milecsa::rpc::Client::Connect(u, true, error)) {
 
-            std::count << *rpc->ping(response)) << endl;
+            std::count << *rpc->ping(response, error)) << endl;
 
-            auto last_block_id = *rpc->get_current_block_id(response);
+            auto last_block_id = *rpc->get_current_block_id(response, error);
             cout << + UInt256ToDecString(last_block_id) << endl;
 
-            cout << rpc->get_blockchain_info(response)->dump()) << endl;
+            cout << rpc->get_blockchain_info(response, error)->dump()) << endl;
 
-            cout << rpc->get_blockchain_state(response)->dump()) << endl;
+            cout << rpc->get_blockchain_state(response, error)->dump()) << endl;
 
             auto pk = "EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx";
-            cout << rpc->get_wallet_state(pk, response)->dump()) << endl;
+            cout << rpc->get_wallet_state(pk, response, error)->dump()) << endl;
 
-            cout << rpc->get_wallet_transactions(pk, 5, response)->dump()) << endl;
+            cout << rpc->get_wallet_transactions(pk, 5, response, error)->dump()) << endl;
 
-            cout << rpc->get_network_state(response)->dump()) << endl;
+            cout << rpc->get_network_state(response, error)->dump()) << endl;
 
-            cout << rpc->get_nodes(response)->dump()) << endl;
+            cout << rpc->get_nodes(response, error)->dump()) << endl;
 
-            cout << rpc->get_block(last_block_id, response)->dump()) << endl;
+            cout << rpc->get_block(last_block_id, response, error)->dump()) << endl;
     }
 ```
 
@@ -150,7 +150,7 @@ Allowed methods:
                     //
                     // send prepared and signed transaction
                     //                   
-                    if(auto t = rpc->send_transaction(*ppk,*trx_body,handler)){
+                    if(auto t = rpc->send_transaction(*ppk,*trx_body,handler, error)){
                         return std::any_cast<rpc::response>(t);
                     }
                 }

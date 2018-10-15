@@ -14,11 +14,11 @@ struct RequestsEval {
 
     using Url = milecsa::rpc::Url;
 
-    milecsa::ErrorHandler error = [](milecsa::result code, std::string error){
+    milecsa::ErrorHandler error_handler = [](milecsa::result code, std::string error){
         BOOST_TEST_MESSAGE("Request Error: " + error);
     };
 
-    milecsa::http::ResponseHandler response = [&](const milecsa::http::response &http){
+    milecsa::http::ResponseHandler response_handler = [&](const milecsa::http::response &http){
         std::cerr << "Response error: " << http.result() << std::endl << http << std::endl;
     };
 
@@ -35,35 +35,35 @@ struct RequestsEval {
     }
 
     bool test(const std::string &u = "http://node002.testnet.mile.global/v1/api") {
-        if (auto rpc = milecsa::rpc::Client::Connect(u, true, error)) {
+        if (auto rpc = milecsa::rpc::Client::Connect(u, true, response_handler, error_handler)) {
 
-            BOOST_TEST_MESSAGE("Ping : " + StringFormat("%l", *rpc->ping(response)));
+            BOOST_TEST_MESSAGE("Ping : " + StringFormat("%l", *rpc->ping()));
 
-            auto last_block_id = *rpc->get_current_block_id(response);
+            auto last_block_id = *rpc->get_current_block_id();
             BOOST_TEST_MESSAGE(" -- ");
             BOOST_TEST_MESSAGE("Id   : " + UInt256ToDecString(last_block_id));
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Info : " + rpc->get_blockchain_info(response)->dump());
+            BOOST_TEST_MESSAGE("Info : " + rpc->get_blockchain_info()->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("State: " + rpc->get_blockchain_state(response)->dump());
+            BOOST_TEST_MESSAGE("State: " + rpc->get_blockchain_state()->dump());
 
             auto pk = "EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx";
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Wallet: " + rpc->get_wallet_state(pk, response)->dump());
+            BOOST_TEST_MESSAGE("Wallet: " + rpc->get_wallet_state(pk)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Trxs  : " + rpc->get_wallet_transactions(pk, 5, response)->dump());
+            BOOST_TEST_MESSAGE("Trxs  : " + rpc->get_wallet_transactions(pk, 5)->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("NW State: " + rpc->get_network_state(response)->dump());
+            BOOST_TEST_MESSAGE("NW State: " + rpc->get_network_state()->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("NW Nodes: " + rpc->get_nodes(response)->dump());
+            BOOST_TEST_MESSAGE("NW Nodes: " + rpc->get_nodes()->dump());
 
             BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Block: " + rpc->get_block(last_block_id, response)->dump());
+            BOOST_TEST_MESSAGE("Block: " + rpc->get_block(last_block_id)->dump());
 
             return true;
         }
