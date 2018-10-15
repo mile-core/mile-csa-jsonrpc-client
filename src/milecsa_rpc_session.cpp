@@ -12,12 +12,13 @@ namespace milecsa::rpc::detail {
                Url::protocol protocol,
                bool verify):
 
+            use_ssl(protocol == Url::protocol::https),
+            verify_ssl(verify),
+
             host(host),
             port(boost::to_string(port)),
             target(target),
 
-            use_ssl(protocol == Url::protocol::https),
-            verify_ssl(verify),
             resolver(0),
             socket(0),
             stream(0) {

@@ -151,5 +151,5 @@ namespace milecsa::rpc {
         }
 
         return std::any();
-    };
+    }
 }

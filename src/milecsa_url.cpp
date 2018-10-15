@@ -14,20 +14,19 @@ namespace milecsa::rpc {
 
     Url::Url(const milecsa::rpc::Url &u):
             url_string_(u.url_string_),
-            path_(u.path_),
-            port_(u.port_),
-            query_(u.query_),
             protocol_(u.protocol_),
-            domain_(u.domain_) {
-    }
+            domain_(u.domain_),
+            port_(u.port_),
+            path_(u.path_),
+            query_(u.query_){}
 
     Url::Url(const std::string &urlString):
-    url_string_(urlString),
-    path_(""),
-    port_(0),
-    query_(""),
-    protocol_(unknown),
-    domain_(""){}
+            url_string_(urlString),
+            protocol_(unknown),
+            domain_(""),
+            port_(0),
+            path_(""),
+            query_(""){}
 
     std::optional<Url> Url::Parse(const std::string &urlString, const milecsa::ErrorHandler &error) {
 
