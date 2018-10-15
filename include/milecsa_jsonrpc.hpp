@@ -28,13 +28,14 @@ namespace milecsa {
              * Create MILE json-rpc client controller
              * @param urlString - MILE node runs on json-rpcd mode
              * @param verify_ssl - if url contains https protocol it will enable SSL verification
-             * @param error - connection error handler
+             * @param response_fail_handler - response fail handler
+             * @param error_handler - connection error handler
              * @return options Client object
              */
             static std::optional<Client> Connect(
                     const std::string &urlString,
                     bool verify_ssl = true,
-                    const http::ResponseHandler &response_handler = http::default_response_handler,
+                    const http::ResponseHandler &response_fail_handler = http::default_response_handler,
                     const ErrorHandler &error_handler = default_error_handler);
 
             ~Client(){};
@@ -149,12 +150,14 @@ namespace milecsa {
                           const request &params) const;
 
         private:
+
             Client(const Url &url,
                    bool verify_ssl,
-                   const http::ResponseHandler &response_handler = http::default_response_handler,
-                   const ErrorHandler &error_handler = default_error_handler);
+                   const http::ResponseHandler &response_handler,
+                   const ErrorHandler &error_handler);
+
             Client():verify_ssl_(true),
-                     response_handler(http::default_response_handler),
+                     response_fail_handler(http::default_response_handler),
                      error_handler(default_error_handler){};
 
             const std::optional<Url> url_;
@@ -162,7 +165,7 @@ namespace milecsa {
             bool verify_ssl_;
             std::shared_ptr<detail::RpcSession> session;
 
-            http::ResponseHandler response_handler;
+            http::ResponseHandler response_fail_handler;
             ErrorHandler error_handler;
         };
     }

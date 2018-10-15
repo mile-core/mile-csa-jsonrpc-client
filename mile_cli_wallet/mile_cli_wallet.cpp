@@ -26,18 +26,21 @@ int main(int argc, char *argv[]) {
     if (!parse_cmdline(argc, argv))
         return 1;
 
-    auto error = [&](milecsa::result code, const std::string &error){
+    auto error_handler = [](
+            milecsa::result code,
+            const std::string &error){
         std::cerr << "Call error: " << error << std::endl;
         exit(-1);
     };
 
-    auto response = [&](const milecsa::http::response &http){
-        std::cerr << "Response error: " << http.result() << std::endl << http << std::endl;
-        exit(-1);
+    milecsa::http::ResponseHandler response_fail_handler = [](
+            const milecsa::http::status code,
+            const std::string &method,
+            const milecsa::http::response &http){
+        std::cerr << "Response["<<code<<"] "<<method<<" error: " << http.result() << std::endl << http << std::endl;
     };
 
-    if (auto rpc = milecsa::rpc::Client::Connect(opt_mile_node_address, true, response, error)){
-
+    if (auto rpc = milecsa::rpc::Client::Connect(opt_mile_node_address, true, response_fail_handler, error_handler)){
 
         try {
             nlohmann::json params;
@@ -51,7 +54,7 @@ int main(int argc, char *argv[]) {
             auto result = rpc->call(opt_method,params);
 
             if (!result.has_value()) {
-                std::cerr << "Rpc error: nothing response"<< std::endl;
+                std::cerr << "Rpc error: response does not have any result"<< std::endl;
                 exit(-1);
             }
 

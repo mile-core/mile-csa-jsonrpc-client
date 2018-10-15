@@ -32,8 +32,9 @@ struct SessionEval {
         BOOST_TEST_MESSAGE("Session Error: " + error);
     };
 
-    milecsa::http::ResponseHandler response_handler = [&](const milecsa::http::response &http){
+    milecsa::http::ResponseHandler response_handler = [&](const milecsa::http::status code, const std::string &method, const milecsa::http::response &http){
         BOOST_TEST_MESSAGE("Response Error: ");
+        BOOST_TEST_MESSAGE("       Calling: " + method);
         BOOST_TEST_MESSAGE(http.result());
         BOOST_TEST_MESSAGE(http);
     };
@@ -57,9 +58,6 @@ struct SessionEval {
 
             return session;
 
-        }
-        else {
-            return nullptr;
         }
 
         return nullptr;
