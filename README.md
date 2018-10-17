@@ -162,13 +162,13 @@ Allowed methods:
 
 # MILE Explorer JSON-RPC API
 
-##Proxy common API
+## Proxy common API
 
 In case of method (GET/PUT/POST/...) no or not processed http code 405 Method Not Allowed.
 
 **Ping proxy service**
 
-#####http request
+##### http request
 ```
 POST https://wallet.mile.global/v1/api
 Accept: */*
@@ -177,7 +177,7 @@ Content-Type: application/json
 
 {"method":"ping","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
 ```
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -185,7 +185,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"10","id":1,"result":true}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -193,10 +193,10 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-###Blockchain calls
+### Blockchain calls
 
-####Getting block-chain current info (block-chain configuration)
-#####http request
+#### Getting block-chain current info (block-chain configuration)
+##### http request
 ```
 POST https://wallet.mile.global/v1/api
 Accept: */*
@@ -206,7 +206,7 @@ Content-Type: application/json
 {"method":"get-blockchain-info","params":[], "id": 1, "jsonrpc": "2.0", "version": "1.0"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -219,7 +219,7 @@ Content-Type: application/json
 {"name":"Mile tokens","code":1}]}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -227,8 +227,8 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-###Getting block-chain current state (block-chain configuration)
-#####http request
+### Getting block-chain current state (block-chain configuration)
+##### http request
 ```
 POST https://wallet.mile.global/v1/api
 Accept: */*
@@ -238,7 +238,7 @@ Content-Type: application/json
 {"method":"get-blockchain-state","params":[], "id": 1, "jsonrpc": "2.0", "version": "1.0"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -255,7 +255,7 @@ Content-Type: application/json
 "supported-assets": [{"name": "XDR tokens","code": "0"},{"name": "Mile tokens", "code": "1"}]}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -264,7 +264,7 @@ Content-Type: application/json
 ```
 
 ###Get block by id
-#####http request
+##### http request
 
 ```
 POST https://wallet.mile.global/v1/api
@@ -275,7 +275,7 @@ Content-Type: application/json
 {"method":"get-block-by-id","params":{"id": 42}, "id": 1, "jsonrpc": "2.0", "version": "10"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -283,7 +283,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"10","id":1,"result":{....}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -291,7 +291,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
@@ -299,11 +299,11 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't find block id: 1","code":100x}}
 ```
 
-###Getting block-chain network state (network configuration)
+### Getting block-chain network state (network configuration)
 
 
-###Get common network states
-#####http request
+### Get common network states
+##### http request
 
 ```
 POST https://wallet.mile.global/v1/api
@@ -314,7 +314,7 @@ Content-Type: application/json
 {"method":"get-network-state","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -322,8 +322,8 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"10","id":1,"result":{ "nodes": {"count":10}, "xxx": {"count":42}}}
 ```
 
-###Get consensus node list with limit
-#####http request
+### Get consensus node list with limit
+##### http request
 
 ```
 POST https://wallet.mile.global/v1/api
@@ -334,7 +334,7 @@ Content-Type: application/json
 {"method":"get-nodes","params":{}, "id": 1, "jsonrpc": "2.0", "version": "1.0"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -347,10 +347,10 @@ Content-Type: application/json
 }
 ```
 
-###Wallet calls
+### Wallet calls
 
-####Get wallet state
-#####http request
+#### Get wallet state
+##### http request
 ```
 POST https://wallet.mile.global/v1/api
 Accept: */*
@@ -362,7 +362,7 @@ Content-Type: application/json
  "jsonrpc": "2.0", "version": "10"}         
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -372,7 +372,7 @@ Content-Type: application/json
 "tags":"","node-address":"","last-transaction-id":"7","exist":1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -380,7 +380,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
@@ -388,8 +388,8 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode wallet pulic key: base58 check string decode error","code":1001}}
 ```
 
-####Get wallet transactions
-#####http request
+#### Get wallet transactions
+##### http request
 ```
 POST https://wallet.mile.global/v1/api
 Accept: */*
@@ -399,7 +399,7 @@ Content-Type: application/json
 {"method":"get-wallet-transactions","params":{"public-key": "2mMN2bHqSm8WTuY3gB9UXDJsKnuZKKyDTpXg1MF4qxZTEsLHr3", "limit":1000}, "id": 1, "jsonrpc": "2.0", "version": "1"}         
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -414,7 +414,7 @@ Content-Type: application/json
 "digest":"Q1QDzehqqBrtEqRNb2nzJnrn8nUPv1owQQenGjxXDWWFDGZbP","type":"approved"}]}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -422,7 +422,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
@@ -430,8 +430,8 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode wallet pulic key: base58 check string decode error","code":1001}}
 ```
 
-####Send signed transactions
-#####http request
+#### Send signed transactions
+##### http request
 
 ```
 POST https://wallet.mile.global/v1/api
@@ -442,7 +442,7 @@ Content-Type: application/json
 {"method":"send-transaction","params":{...signed transaction body}, "id": 1, "jsonrpc": "2.0", "version": "10"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -451,7 +451,7 @@ Content-Type: application/json
 "result":true}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -459,7 +459,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
@@ -467,8 +467,8 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode trx data","code":1002}}
 ```
 
-####Get current block id
-#####http request
+#### Get current block id
+##### http request
 
 ```
 POST https://wallet.mile.global/v1/api
@@ -479,7 +479,7 @@ Content-Type: application/json
 {"method":"get-current-block-id","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
 ```
 
-#####http response
+##### http response
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -488,7 +488,7 @@ Content-Type: application/json
 "result":{ current-block-id": "22" }}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 500 Internal Server Error
 Content-Type: application/json
@@ -496,7 +496,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
 ```
 
-#####http error
+##### http error
 ```
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
