@@ -20,10 +20,10 @@ static const nlohmann::json tests = R"([
   {"method": "get-nodes",                "params": {"first-id":0, "limit":3}},
   {"method": "get-transaction-history-state","params":{}},
   {"method": "get-transaction-history",  "params": {"first-id":100,"limit":10}},
-  {"method": "get-transaction-info",     "params": {"public-key":"111111111111111111111111111111115RyRTN", "id":10}},
-  {"method": "get-wallet-history-state", "params": {"public-key":"2cv1HqiCE8BeHc4Y7vucckMysx3PV7KND2mQiMdXqDJg812Fd5"}},
-  {"method": "get-wallet-history-blocks","params": {"public-key":"zVG4iPaggWUUaDEkyEyFBv8dNYSaFMm2C7WS8nSMKWLsSh9x", "first-id": 0, "limit": 2}},
-  {"method": "get-wallet-history-transactions", "params": {"public-key":"2cv1HqiCE8BeHc4Y7vucckMysx3PV7KND2mQiMdXqDJg812Fd5", "first-id": 0, "limit": 3}}
+  {"method": "get-transaction-info",     "params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx", "id":92}},
+  {"method": "get-wallet-history-state", "params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx"}},
+  {"method": "get-wallet-history-blocks","params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx", "first-id": 0, "limit": 2}},
+  {"method": "get-wallet-history-transactions", "params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx", "first-id": 0, "limit": 3}}
 ])"_json;
 
 struct SessionEval {

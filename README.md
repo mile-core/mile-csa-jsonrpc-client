@@ -159,3 +159,384 @@ Allowed methods:
                 }
     }
 ```
+
+# MILE Explorer JSON-RPC API
+
+##Proxy common API
+
+In case of method (GET/PUT/POST/...) no or not processed http code 405 Method Not Allowed.
+
+**Ping proxy service**
+
+#####http request
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"ping","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
+```
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,"result":true}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+###Blockchain calls
+
+####Getting block-chain current info (block-chain configuration)
+#####http request
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-blockchain-info","params":[], "id": 1, "jsonrpc": "2.0", "version": "1.0"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,
+"result":{"project":"Mile",
+"version":"1",
+"supported-transaction-types":["RegisterNodeTransactionWithAmount","UnregisterNodeTransaction","TransferAssetsTransaction","CreatePollSetTokenCourse","VotingCoursePoll","VotingCourseCount","EmissionTransaction"],
+"supported-assets":[{"name":"XDR tokens","code":0},
+{"name":"Mile tokens","code":1}]}}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+###Getting block-chain current state (block-chain configuration)
+#####http request
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-blockchain-state","params":[], "id": 1, "jsonrpc": "2.0", "version": "1.0"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,
+"result":{"project":"Mile",
+"version":"1",
+"block-count":4242,
+"node-count":10000,
+"voting-transaction-count":10,
+"pending-transaction-count":10,
+"blockchain-state":"Master",
+"consensus-round":0,
+"supported-assets": [{"name": "XDR tokens","code": "0"},{"name": "Mile tokens", "code": "1"}]}}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+###Get block by id
+#####http request
+
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-block-by-id","params":{"id": 42}, "id": 1, "jsonrpc": "2.0", "version": "10"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,"result":{....}}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+#####http error
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't find block id: 1","code":100x}}
+```
+
+###Getting block-chain network state (network configuration)
+
+
+###Get common network states
+#####http request
+
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-network-state","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,"result":{ "nodes": {"count":10}, "xxx": {"count":42}}}
+```
+
+###Get consensus node list with limit
+#####http request
+
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-nodes","params":{}, "id": 1, "jsonrpc": "2.0", "version": "1.0"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,
+ "result":[
+   {"public-key":"1qaz2wsx3edc4rfv5tgb....", "address":"42.42.42.42", "node-id": "1"},
+   {"public-key":"2daz2af3sx3ed51234xe....", "address":"242.242.242.242", "node-id": "10"}
+ ]
+}
+```
+
+###Wallet calls
+
+####Get wallet state
+#####http request
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-wallet-state",
+"params":{"public-key": "2mMN2bHqSm8WTuY3gB9UXDJsKnuZKKyDTpXg1MF4qxZTEsLHr3"}, "id": 1,
+ "jsonrpc": "2.0", "version": "10"}         
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,
+"result":{"balance":[{"asset-code":0,"amount":"9"},{"asset-code":1,"amount":"0.1"}],
+"tags":"","node-address":"","last-transaction-id":"7","exist":1}}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+#####http error
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode wallet pulic key: base58 check string decode error","code":1001}}
+```
+
+####Get wallet transactions
+#####http request
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-wallet-transactions","params":{"public-key": "2mMN2bHqSm8WTuY3gB9UXDJsKnuZKKyDTpXg1MF4qxZTEsLHr3", "limit":1000}, "id": 1, "jsonrpc": "2.0", "version": "1"}         
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,
+"result":{"transactions":[{"description":{
+"type":"TransferAssetsTransaction",
+"id":"10",
+"from":"2mMN2bHqSm8WTuY3gB9UXDJsKnuZKKyDTpXg1MF4qxZTEsLHr3",
+"to":"Z4mMN2bHqSm8WTuY3gB9UXDJsKnuZKKyDTpXg1MF4qxZTEsLHr3",
+"asset-code":0,"amount":"20"},
+"digest":"Q1QDzehqqBrtEqRNb2nzJnrn8nUPv1owQQenGjxXDWWFDGZbP","type":"approved"}]}}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+#####http error
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode wallet pulic key: base58 check string decode error","code":1001}}
+```
+
+####Send signed transactions
+#####http request
+
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"send-transaction","params":{...signed transaction body}, "id": 1, "jsonrpc": "2.0", "version": "10"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,
+"result":true}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+#####http error
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode trx data","code":1002}}
+```
+
+####Get current block id
+#####http request
+
+```
+POST https://wallet.mile.global/v1/api
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{"method":"get-current-block-id","params":{}, "id": 1, "jsonrpc": "2.0", "version": "10"}
+```
+
+#####http response
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"10","id":1,
+"result":{ current-block-id": "22" }}
+```
+
+#####http error
+```
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":"unknown RPC method","code":-1}}
+```
+
+#####http error
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"jsonrpc":"2.0","version":"1.0","id":1,"error":{"message":couldn't decode trx data","code":1002}}
+```
+
+
+
+
+# TODO
+
+## Errors code (EXAMPLE CODES!!!)
+
+
+    ```
+    -1 - Unknown error
+    0 - Ok
+    1001 - Encoding error
+    ```
+
+```
+-32700 	Parse error 	Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text.
+-32600 	Invalid Request 	The JSON sent is not a valid Request object.
+-32601 	Method not found 	The method does not exist / is not available.
+-32602 	Invalid params 	Invalid method parameter(s).
+-32603 	Internal error 	Internal JSON-RPC error.
+-32000 to -32099 	Server error 	Reserved for implementation-defined server-errors.
+```
+
+```
+{"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": "1"}
+```
+
+## Batch
+    ```json
+    
+    [
+        {},
+        {}
+    ]
+    
+    ```
