@@ -100,3 +100,12 @@ target_include_directories(
 add_subdirectory(test)
 add_subdirectory(mile_cli_wallet)
 enable_testing ()
+
+SET(CMAKE_INSTALL_PREFIX "/usr/local/milecsa")
+
+FILE(GLOB INCLUDE_FILES
+        include/*.hpp
+        )
+
+install(FILES ${INCLUDE_FILES} DESTINATION include)
+install(TARGETS ${PROJECT_LIB} DESTINATION lib)

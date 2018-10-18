@@ -30,3 +30,6 @@ target_link_libraries (
 target_link_libraries (
         ${MILE_CLI_SIGNATURE}
         ${LIBS})
+
+install(TARGETS ${MILE_CLI_WALLET} DESTINATION bin)
+install(TARGETS ${MILE_CLI_SIGNATURE} DESTINATION bin)
