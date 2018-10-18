@@ -26,7 +26,8 @@
     $ ./b2 install --prefix=/usr --with=all -j4
 
 ## Tested
-1. Centos7 (gcc v7.0) 
+1. Centos7 
+   ([Devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/))
 1. Ubuntu 18.4
 1. OSX 10.13, XCode10
 
