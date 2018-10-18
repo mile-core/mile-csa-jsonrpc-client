@@ -6,16 +6,13 @@
 #include "milecsa.hpp"
 #include "milecsa_jsonrpc.hpp"
 #include <boost/program_options.hpp>
-#include <boost/asio.hpp>
-#include <boost/exception/exception.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-#include <milecsa_jsonrpc.hpp>
-#include <boost/beast/http/status.hpp>
+#include <boost/chrono/chrono.hpp>
 
 static std::string opt_mile_node_address = "http://node002.testnet.mile.global/v1/api";
 static std::string opt_method= "";
 static std::string opt_method_params = "{}";
 static int opt_reconnections = 3;
+static time_t opt_timeout = 3;
 
 namespace po = boost::program_options;
 
@@ -91,6 +88,8 @@ int main(int argc, char *argv[]) {
         if (++reconnections >= opt_reconnections ) {
             exit(-1);
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(opt_timeout));
 
         do_request();
     };

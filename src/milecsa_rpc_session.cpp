@@ -57,38 +57,45 @@ namespace milecsa::rpc::detail {
 
     bool RpcSession::connect(const milecsa::ErrorHandler &error) {
 
-        auto const results = resolver->resolve(host, port);
+        try {
+            auto const results = resolver->resolve(host, port);
 
-        if (results.empty()) {
-            error(result::NOT_FOUND,ErrorFormat("Host not found"));
+            if (results.empty()) {
+                error(result::NOT_FOUND,ErrorFormat("Host not found"));
+                return false;
+            }
+
+            if (use_ssl) {
+
+                stream->set_verify_callback([&](bool preverified,
+                                                boost::asio::ssl::verify_context& ctx){
+                    return this->verify_ssl;
+                });
+
+                if(! SSL_set_tlsext_host_name(stream->native_handle(), host.c_str()))
+                {
+                    error(result::FAIL,ErrorFormat("SSL handshake error"));
+                    return false;
+                }
+                try {
+                    boost::asio::connect(stream->next_layer(), results.begin(), results.end());
+                    stream->handshake(ssl::stream_base::client);
+                }
+                catch(std::exception const& e)
+                {
+                    error(result::FAIL,ErrorFormat(e.what()));
+                    return false;
+                }
+            }
+            else {
+                boost::asio::connect(*socket, results.begin(), results.end());
+            }
+        }
+        catch (std::exception const& e) {
+            error(result::FAIL,ErrorFormat(e.what()));
             return false;
         }
-
-        if (use_ssl) {
-
-            stream->set_verify_callback([&](bool preverified,
-                                            boost::asio::ssl::verify_context& ctx){
-                return this->verify_ssl;
-            });
-
-            if(! SSL_set_tlsext_host_name(stream->native_handle(), host.c_str()))
-            {
-                error(result::FAIL,ErrorFormat("SSL handshake error"));
-                return false;
-            }
-            try {
-                boost::asio::connect(stream->next_layer(), results.begin(), results.end());
-                stream->handshake(ssl::stream_base::client);
-            }
-            catch(std::exception const& e)
-            {
-                error(result::FAIL,ErrorFormat(e.what()));
-                return false;
-            }
-        }
-        else {
-            boost::asio::connect(*socket, results.begin(), results.end());
-        }
+        
         return true;
     }
 
