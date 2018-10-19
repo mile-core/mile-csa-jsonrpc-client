@@ -72,26 +72,30 @@ int main(int argc, char *argv[]) {
                 response_fail_handler,
                 error_handler)){
 
+            ///
+            /// to avoid duble spend and  keep high performance capability
+            /// get last block id to add transaction siganture
+            ///
             auto block_id = rpc->get_current_block_id();
 
-            if(!block_id) {
+            if(!block_id)
                 return;
-            }
 
             unsigned short asset_code = opt_asset_code;
             uint64_t trx_id = rand();
 
             auto request =
                     transfer::CreateRequest(
-                            *ppk,
-                            opt_to,
+                            *ppk,        // wallet keys pair
+                            opt_to,      // destination address: public key of recipient
                             *block_id,   // block id
-                            trx_id,     // trx id
-                            asset_code, // asset code
-                            opt_amount,
-                            opt_memo,
-                            "",
-                            error_handler)->get_body() ;
+                            trx_id,      // trx id
+                            asset_code,  // asset code
+                            opt_amount,  // amount
+                            opt_memo,    // transaction description
+                            "",          // fee can be empty
+                            error_handler// error handler
+                            )->get_body() ;
 
             if (request){
 
