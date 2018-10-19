@@ -17,7 +17,7 @@ endif(CCACHE_FOUND)
 file(GLOB LIBRARY_FILE_LIST ${CMAKE_SOURCE_DIR}/vendor/mile-csa-api/*.*)
 list(LENGTH LIBRARY_FILE_LIST NUMBER_OF_FILES)
 if (NUMBER_OF_FILES EQUAL 0)
-    message(STATUS "'mile-csa-ap' library not found")
+    message(STATUS "'mile-csa-api' library not found")
     execute_process(COMMAND git submodule update --init --recursive vendor/mile-csa-api
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 else ()
