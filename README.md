@@ -66,7 +66,11 @@ Allowed methods:
     #include "milecsa_jsonrpc.hpp"
 
     milecsa::ErrorHandler error_handler = [](milecsa::result code, const std::string &error){
-        BOOST_TEST_MESSAGE("Request Error: " + error);
+        if (code == milecsa::result::FAIL) {
+		//
+		// Error handling...
+		//
+	}
     };
 
     milecsa::http::ResponseHandler response_fail_handler = [](
