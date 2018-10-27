@@ -39,13 +39,16 @@ $ ./mile_cli_wallet --help
 Allowed options:
   --help                                produce help message
   --debug                               print debug messages
-  --no-keepalive                        do not asc keep-alive header
-  -u [ --url ] arg (=http://node002.testnet.mile.global/v1/api)
+  -w [ --wallet ] arg                   create wallet from random (-w "random")
+                                        or secret phrase
+  -u [ --url ] arg (=http://lotus000.testnet.mile.global/v1/api)
                                         RPC url
   -m [ --method ] arg                   blockchain command
   -p [ --params ] arg (={})             blockchain params
+  -r [ --reconnections ] arg (=3)       try to connect again reconnection times
+                                        if any connection error occurred
 
-Allowed methods: 
+Methods: 
 	get-blockchain-info 
 	get-blockchain-state 
 	get-network-state 
@@ -55,7 +58,8 @@ Allowed methods:
 	get-wallet-state --params '{"public-key": "...bHqSm8WTuY3gB9UXD..."}' 
 	get-wallet-transactions --params '{"public-key": "...bHqSm8WTuY3gB9UXD..."}' 
 	send-transfer --params '{"private-key": "...bHqSm8WTuY3gB9UXD...", "to":"...pXg1MF4qxZTEsL..", "amount": "100", "asset-code":0, "description":"send my money back!"}' 
-    send-emission --params '{"private-key": "...bHqSm8WTuY3gB9UXD...", "to":"...pXg1MF4qxZTEsL..", "amount": "100", "asset-code":0, "description":"send my money back!"}'
+	send-emission --params '{"private-key": "...bHqSm8WTuY3gB9UXD...", "asset-code":0}' 
+	
 ```
     $ ./mile_cli_wallet -m send-transfer -p '{"private-key": "...", "to": "...", "asset-code": 0, amount:"1000", "description": "0x2039949102"}'
 
@@ -114,7 +118,8 @@ Allowed methods:
     #include "milecsa_jsonrpc.hpp"
     
     std::any transfer_xdr(std::optional<milecsa::rpc::Client> rpc, 
-                          const std::string &amount, const std:string &description = "send my coins back!") {
+                          float &amount, 
+                          const std:string &description = "send my coins back!") {
                 
                 //
                 // you must to get current block id
@@ -138,7 +143,7 @@ Allowed methods:
                 //
                 // choose asset code 
                 //
-                unsigned short asset_code = 0;
+                auto asset = milecsa::assets::XDR;
                 uint64_t trx_id = rand();
                 
                 // 
@@ -147,12 +152,12 @@ Allowed methods:
                 if (auto trx_body = transfer::CreateRequest(
                         *ppk,
                         "....",
-                        block_id,   // block id
-                        trx_id,     // trx id
-                        asset_code, // asset code
-                        amount,     // amount
-                        description,// description
-                        "",         // fee, can be skiped 
+                        block_id,     // block id
+                        trx_id,       // trx id
+                        asset,        // asset
+                        amount,       // amount
+                        0.0,          // fee, allways 0.0
+                        description,  // description
                         error_handler)->get_body()){
                     
                     //
