@@ -4,7 +4,6 @@
 
 #define BOOST_TEST_MODULE rpc_session
 
-#include "crypto_types.h"
 #include "milecsa_jsonrpc.hpp"
 
 #include <optional>
@@ -25,6 +24,8 @@ static const nlohmann::json tests = R"([
   {"method": "get-wallet-history-blocks","params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx", "first-id": 0, "limit": 2}},
   {"method": "get-wallet-history-transactions", "params": {"public-key":"EUjuoTty9oHdF8h7ab4u3KCCci5dduFxvJbqAx5qXUUtk2Wnx", "first-id": 0, "limit": 3}}
 ])"_json;
+
+static std::string explorer_url = "https://explorer.testnet.mile.global/v1/api";
 
 struct SessionEval {
 
@@ -65,7 +66,7 @@ struct SessionEval {
         return nullptr;
     }
 
-    bool run_tests(const std::string &input_method="", const std::string &u = "http://127.0.0.1:9998/v1/api"){
+    bool run_tests(const std::string &input_method="", const std::string &u = explorer_url){
         try {
             if (tests.is_discarded()){
                 return false;

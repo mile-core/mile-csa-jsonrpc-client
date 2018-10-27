@@ -4,7 +4,7 @@
 
 #include "milecsa_jsonrpc.hpp"
 #include "milecsa_rpc_id.hpp"
-#include "crypto_types.h"
+#include "mile_crypto.h"
 
 namespace milecsa::rpc {
     std::any Client::call(
@@ -72,6 +72,9 @@ namespace milecsa::rpc {
                 method == "send-emission"
                 ) {
 
+            static  time_t _trx_counter = 0;
+            srand (time(NULL) + _trx_counter++ );
+
             if(params.count("to")==0){
                 error_handler(result::NOT_FOUND,ErrorFormat("destination public key %s not defined", method.c_str()));
                 return std::nullopt;
@@ -105,12 +108,15 @@ namespace milecsa::rpc {
                 return std::nullopt;
             }
 
-            //using transaction = milecsa::transaction::Request<nlohmann::json>;
+            using transfer = milecsa::transaction::JsonTransfer;
+            using emission = milecsa::transaction::JsonEmission;
 
-            using transfer = milecsa::transaction::Transfer<nlohmann::json>;
-            using emission = milecsa::transaction::Emission<nlohmann::json>;
 
             unsigned short asset_code = params["asset-code"];
+            auto asset = milecsa::assets::TokenFromCode(asset_code);
+
+            float amount = params["amount"];
+
             uint64_t trx_id = rand();
 
             auto request = method == "send-transfer" ?
@@ -120,21 +126,18 @@ namespace milecsa::rpc {
                                    params["to"],
                                    block_id,   // block id
                                    trx_id,     // trx id
-                                   asset_code, // asset code
-                                   params["amount"],
+                                   asset,      // asset
+                                   amount,
+                                   0.0,
                                    description,
-                                   "",
                                    error_handler)->get_body() :
 
                            emission::CreateRequest(
                                    *ppk,
-                                   params["to"],
                                    block_id,   // block id
                                    trx_id,     // trx id
-                                   asset_code, // asset code
-                                   params["amount"],
-                                   description,
-                                   "",
+                                   asset,      // asset code
+                                   0.0,
                                    error_handler)->get_body();
 
             if (request){

@@ -27,11 +27,8 @@ endif()
 set(MILECSA_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/mile-csa-api/include
         CACHE PATH "milecsa include directory")
 
-set(MILECSA_CRYPTO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/mile-csa-api/vendor/crypto
+set(MILECSA_CRYPTO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/mile-csa-api/vendor/mile-crypto/include
         CACHE PATH "milecsa crypto include directory")
-
-set(MILECSA_ED25519_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/mile-csa-api/vendor/ed25519/src
-        CACHE PATH "milecsa ed25519 include directory")
 
 set(MILECSA_NLOHMANN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/mile-csa-api/vendor/nlohmann
         CACHE PATH "milecsa nlohmann json sdk include directory")

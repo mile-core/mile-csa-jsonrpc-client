@@ -7,16 +7,14 @@
 #include "milecsa_jsonrpc.hpp"
 #include <boost/program_options.hpp>
 #include <termios.h>
-#include "crypto.h"
-#include "crypto_types.h"
 
 #define MAXPW ePrivateKeySize
 
-static std::string opt_mile_node_address = "http://node002.testnet.mile.global/v1/api";
+static std::string opt_mile_node_address = "http://lotus001.testnet.mile.global/v1/api";
 static std::string opt_to = "";
 static std::string opt_private = "";
 static unsigned short opt_asset_code = 100;
-static std::string opt_amount = "";
+static float opt_amount = 0.0f;
 static std::string opt_memo = "";
 static int opt_reconnections = 3;
 static bool opt_test = false;
@@ -81,7 +79,7 @@ int main(int argc, char *argv[]) {
             if(!block_id)
                 return;
 
-            unsigned short asset_code = opt_asset_code;
+            auto asset = milecsa::assets::TokenFromCode(opt_asset_code);
             uint64_t trx_id = rand();
 
             auto request =
@@ -90,10 +88,10 @@ int main(int argc, char *argv[]) {
                             opt_to,      // destination address: public key of recipient
                             *block_id,   // block id
                             trx_id,      // trx id
-                            asset_code,  // asset code
+                            asset,       // asset code
                             opt_amount,  // amount
+                            0.0,         // fee can be empty
                             opt_memo,    // transaction description
-                            "",          // fee can be empty
                             error_handler// error handler
                             )->get_body() ;
 
@@ -235,7 +233,7 @@ static bool parse_cmdline(int ac, char *av[]) {
                 ("asset,c", po::value<unsigned short>(&opt_asset_code),
                  "asset code XDR:0, MILE:1")
 
-                ("amount,a", po::value<std::string>(&opt_amount)->
+                ("amount,a", po::value<float>(&opt_amount)->
                          default_value(opt_amount),
                  "transfer amount")
 
@@ -285,7 +283,7 @@ static bool parse_cmdline(int ac, char *av[]) {
             exit(0);
         }
 
-        if (opt_amount.empty()){
+        if (opt_amount <= 0 ){
             std::cout << desc << "\n";
             exit(0);
         }
