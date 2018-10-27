@@ -1,7 +1,6 @@
+
 #include "milecsa_jsonrpc.hpp"
 #include "milecsa_rpc_id.hpp"
-#include "crypto_types.h"
-
 #include "milecsa_rpc_session.hpp"
 
 namespace milecsa::rpc {

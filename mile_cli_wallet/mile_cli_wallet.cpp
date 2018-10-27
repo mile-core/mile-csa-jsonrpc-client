@@ -8,7 +8,7 @@
 #include <boost/program_options.hpp>
 #include <boost/chrono/chrono.hpp>
 
-static std::string opt_mile_node_address = "http://node002.testnet.mile.global/v1/api";
+static std::string opt_mile_node_address = "http://lotus000.testnet.mile.global/v1/api";
 static std::string opt_method= "";
 static std::string opt_method_params = "{}";
 static int opt_reconnections = 3;
@@ -85,6 +85,10 @@ int main(int argc, char *argv[]) {
             const std::string &error){
         std::cerr << "Call ["<<reconnections<<"] error: " << error << std::endl;
 
+        if (code != milecsa::result::FAIL) {
+            exit(-1);
+        }
+
         if (++reconnections >= opt_reconnections ) {
             exit(-1);
         }
@@ -143,7 +147,7 @@ static bool parse_cmdline(int ac, char *av[]) {
         "\tget-wallet-state --params '{\"public-key\": \"...bHqSm8WTuY3gB9UXD...\"}' \n"\
         "\tget-wallet-transactions --params '{\"public-key\": \"...bHqSm8WTuY3gB9UXD...\"}' \n"\
         "\tsend-transfer --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"to\":\"...pXg1MF4qxZTEsL..\", \"amount\": \"100\", \"asset-code\":0, \"description\":\"send my money back!\"}' \n"\
-         "\tsend-emission --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"to\":\"...pXg1MF4qxZTEsL..\", \"amount\": \"100\", \"asset-code\":0, \"description\":\"send my money back!\"}' \n"\
+         "\tsend-emission --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"asset-code\":0}' \n"\
         "";
 
         po::variables_map vm;

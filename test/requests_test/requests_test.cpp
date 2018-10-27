@@ -4,11 +4,12 @@
 
 #define BOOST_TEST_MODULE requests
 
-#include "crypto_types.h"
 #include "milecsa_jsonrpc.hpp"
 
 #include <optional>
 #include <boost/test/included/unit_test.hpp>
+
+std::string node_url = "http://104.248.7.135:8080/v1/api";
 
 struct RequestsEval {
 
@@ -22,7 +23,7 @@ struct RequestsEval {
         std::cerr << "Response["<<code<<"] "<<method<<" error: " << http.result() << std::endl << http << std::endl;
     };
 
-    bool getzeroblock(const std::string &u = "http://node002.testnet.mile.global/v1/api") {
+    bool getzeroblock(const std::string &u = node_url) {
 
         uint256_t start_position_1(0);
         auto client_tt = milecsa::rpc::Client::Connect(u,false);
