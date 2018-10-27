@@ -10,6 +10,7 @@
 #include "milecsa.hpp"
 #include "milecsa_url.hpp"
 #include "milecsa_rpc_session.hpp"
+#include "json.hpp"
 
 namespace milecsa {
 

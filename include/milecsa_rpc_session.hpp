@@ -7,7 +7,6 @@
 #include "json.hpp"
 #include "milecsa_url.hpp"
 #include "milecsa_rpc_id.hpp"
-#include "crypto_types.h"
 
 #include <optional>
 #include <chrono>
