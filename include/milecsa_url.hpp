@@ -49,7 +49,7 @@ namespace milecsa::rpc {
          * Get url reference string
          * @return - url encoded string
          */
-        const std::string &get_absolut_string() const { return url_string_; };
+        const std::string &get_absolute_string() const { return url_string_; };
 
         /**
          * Get url protocol

@@ -61,7 +61,7 @@ namespace milecsa::rpc::detail {
             auto const results = resolver->resolve(host, port);
 
             if (results.empty()) {
-                error(result::NOT_FOUND,ErrorFormat("Host not found"));
+                error(result::NOT_FOUND,ErrorFormat("Host %s:%i not found", host.c_str(), port.c_str()));
                 return false;
             }
 
@@ -74,7 +74,7 @@ namespace milecsa::rpc::detail {
 
                 if(! SSL_set_tlsext_host_name(stream->native_handle(), host.c_str()))
                 {
-                    error(result::FAIL,ErrorFormat("SSL handshake error"));
+                    error(result::FAIL, ErrorFormat("SSL  %s:%i  handshake error", host.c_str(), port.c_str()));
                     return false;
                 }
                 try {
@@ -83,7 +83,7 @@ namespace milecsa::rpc::detail {
                 }
                 catch(std::exception const& e)
                 {
-                    error(result::FAIL,ErrorFormat(e.what()));
+                    error(result::FAIL,ErrorFormat("%s: %s:%i", e.what(), host.c_str(), port.c_str()));
                     return false;
                 }
             }
@@ -92,7 +92,7 @@ namespace milecsa::rpc::detail {
             }
         }
         catch (std::exception const& e) {
-            error(result::FAIL,ErrorFormat(e.what()));
+            error(result::FAIL,ErrorFormat("%s: %s:%i", e.what(), host.c_str(), port.c_str()));
             return false;
         }
         
@@ -176,7 +176,7 @@ namespace milecsa::rpc::detail {
         }
         catch(std::exception const& e)
         {
-            error_handler(result::FAIL,ErrorFormat(e.what()));
+            error_handler(result::FAIL,ErrorFormat("%s: %s:%i", e.what() , host.c_str(), port.c_str()));
             return std::nullopt;
         }
     }
@@ -191,5 +191,4 @@ namespace milecsa::rpc::detail {
         };
         return command;
     }
-
 }

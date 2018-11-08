@@ -9,7 +9,7 @@
 #include <optional>
 #include <boost/test/included/unit_test.hpp>
 
-std::string node_url = "http://104.248.7.135:8080/v1/api";
+std::string node_url = "http://lotus000.testnet.mile.global/v1/api";
 
 struct RequestsEval {
 
@@ -35,15 +35,20 @@ struct RequestsEval {
         return true;
     }
 
-    bool test(const std::string &u = "http://node002.testnet.mile.global/v1/api") {
+    bool test(const std::string &u = node_url) {
         if (auto rpc = milecsa::rpc::Client::Connect(u, true, response_handler, error_handler)) {
 
             BOOST_TEST_MESSAGE("Ping : " + StringFormat("%l", *rpc->ping()));
 
-            auto last_block_id = *rpc->get_current_block_id();
-            BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Id   : " + UInt256ToDecString(last_block_id));
+            if (auto last_block_id = rpc->get_current_block_id()){
 
+                BOOST_TEST_MESSAGE(" -- ");
+                BOOST_TEST_MESSAGE("Id   : " + UInt256ToDecString(*last_block_id));
+
+                BOOST_TEST_MESSAGE(" -- ");
+                BOOST_TEST_MESSAGE("Block: " + rpc->get_block(*last_block_id)->dump());
+
+            }
             BOOST_TEST_MESSAGE(" -- ");
             BOOST_TEST_MESSAGE("Info : " + rpc->get_blockchain_info()->dump());
 
@@ -62,9 +67,6 @@ struct RequestsEval {
 
             BOOST_TEST_MESSAGE(" -- ");
             BOOST_TEST_MESSAGE("NW Nodes: " + rpc->get_nodes()->dump());
-
-            BOOST_TEST_MESSAGE(" -- ");
-            BOOST_TEST_MESSAGE("Block: " + rpc->get_block(last_block_id)->dump());
 
             return true;
         }
