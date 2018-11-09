@@ -68,7 +68,7 @@ namespace milecsa::rpc {
     std::optional<time_t> Client::ping() const {
         auto start = std::chrono::high_resolution_clock::now();
         if(auto res = session->request(session->next_command("ping"),response_fail_handler,error_handler)) {
-            if (res->at("result") == true || res->at("result") == "true") {
+            if (*res == true || *res == "true") {
                 auto elapsed = std::chrono::high_resolution_clock::now() - start;
                 return std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
             }
@@ -79,7 +79,7 @@ namespace milecsa::rpc {
 
     std::optional<uint256_t> Client::get_current_block_id() const {
         if(auto json = session->request(session->next_command("get-current-block-id"),response_fail_handler,error_handler)){
-            auto result = json->at("result");
+            auto result = *json;
 
             if (result.empty()) {
                 return std::nullopt;

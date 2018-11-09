@@ -166,8 +166,8 @@ namespace milecsa::rpc::detail {
             }
             if (status == boost::beast::http::status::ok) {
                 auto json = json::parse(res.body().data());
-                if (json.count("result") > 0 && json["result"] != nullptr){
-                    return json;
+                if (json.count("result") > 0 && json.at("result") != nullptr){
+                    return json["result"];
                 }
             }
 
