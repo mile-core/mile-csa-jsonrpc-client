@@ -61,7 +61,7 @@ namespace milecsa::rpc::detail {
             auto const results = resolver->resolve(host, port);
 
             if (results.empty()) {
-                error(result::NOT_FOUND,ErrorFormat("Host %s:%i not found", host.c_str(), port.c_str()));
+                error(result::NOT_FOUND,ErrorFormat("Host %s:%s not found", host.c_str(), port.c_str()));
                 return false;
             }
 
@@ -74,7 +74,7 @@ namespace milecsa::rpc::detail {
 
                 if(! SSL_set_tlsext_host_name(stream->native_handle(), host.c_str()))
                 {
-                    error(result::FAIL, ErrorFormat("SSL  %s:%i  handshake error", host.c_str(), port.c_str()));
+                    error(result::FAIL, ErrorFormat("SSL  %s:%s  handshake error", host.c_str(), port.c_str()));
                     return false;
                 }
                 try {
@@ -83,7 +83,7 @@ namespace milecsa::rpc::detail {
                 }
                 catch(std::exception const& e)
                 {
-                    error(result::FAIL,ErrorFormat("%s: %s:%i", e.what(), host.c_str(), port.c_str()));
+                    error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
                     return false;
                 }
             }
@@ -92,7 +92,7 @@ namespace milecsa::rpc::detail {
             }
         }
         catch (std::exception const& e) {
-            error(result::FAIL,ErrorFormat("%s: %s:%i", e.what(), host.c_str(), port.c_str()));
+            error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
             return false;
         }
         
@@ -166,8 +166,8 @@ namespace milecsa::rpc::detail {
             }
             if (status == boost::beast::http::status::ok) {
                 auto json = json::parse(res.body().data());
-                if (json.count("result") > 0 && json["result"] != nullptr){
-                    return json;
+                if (json.count("result") > 0 && json.at("result") != nullptr){
+                    return json["result"];
                 }
             }
 
@@ -176,7 +176,7 @@ namespace milecsa::rpc::detail {
         }
         catch(std::exception const& e)
         {
-            error_handler(result::FAIL,ErrorFormat("%s: %s:%i", e.what() , host.c_str(), port.c_str()));
+            error_handler(result::FAIL,ErrorFormat("%s: %s:%s", e.what() , host.c_str(), port.c_str()));
             return std::nullopt;
         }
     }
