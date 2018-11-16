@@ -1,0 +1,4 @@
+[submodule "vendor/mile-csa-api"]
+	path = vendor/mile-csa-api
+	url = https://github.com/mile-core/mile-csa-api
+	branch = master
