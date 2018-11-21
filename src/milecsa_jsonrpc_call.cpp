@@ -6,12 +6,43 @@
 #include "milecsa_rpc_id.hpp"
 #include "mile_crypto.h"
 
+using emission = milecsa::transaction::JsonEmission;
+using transfer = milecsa::transaction::JsonTransfer;
+using node = milecsa::transaction::JsonNode;
+
 namespace milecsa::rpc {
+
+    static std::any transfer(const Client *client,
+                             const std::string &method,
+                             const milecsa::rpc::request &params,
+                             const ErrorHandler &error_handler);
+
+    static std::any emission(const Client *client,
+                             const std::string &method,
+                             const milecsa::rpc::request &params,
+                             const ErrorHandler &error_handler);
+
+    static std::any register_node(const Client *client,
+                                  const std::string &method,
+                                  const milecsa::rpc::request &params,
+                                  const ErrorHandler &error_handler);
+
+    static std::any unregister_node(const Client *client,
+                                  const std::string &method,
+                                  const milecsa::rpc::request &params,
+                                  const ErrorHandler &error_handler);
+
     std::any Client::call(
             const std::string &method,
             const milecsa::rpc::request &params) const {
 
         try {
+
+            static time_t _trx_counter = 0;
+            srand(time(NULL) + _trx_counter++);
+
+            uint64_t trx_id = rand();
+
             if (method == "ping") {
                 if (auto t = ping()) {
                     return std::any_cast<time_t>(*t);
@@ -68,138 +99,229 @@ namespace milecsa::rpc {
                 }
             } else if (method == "send-transfer") {
 
-                static time_t _trx_counter = 0;
-                srand(time(NULL) + _trx_counter++);
-
-                if ( params.count("to") == 0 ) {
-                    error_handler(result::NOT_FOUND,
-                                  ErrorFormat("destination public key %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
-
-                if (params.count("private-key") == 0) {
-                    error_handler(result::NOT_FOUND, ErrorFormat("source private key %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
-
-                if ( params.count("amount") == 0) {
-                    error_handler(result::NOT_FOUND, ErrorFormat("amount %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
-
-                if (params.count("asset-code") == 0) {
-                    error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
-
-                std::string description;
-                if (params.count("description") > 0) {
-                    description = params["description"];
-                }
-
-                auto block_id = *get_current_block_id();
-
-                auto ppk = milecsa::keys::Pair::FromPrivateKey(params["private-key"], error_handler);
-
-                if (!ppk) {
-                    return std::nullopt;
-                }
-
-                using transfer = milecsa::transaction::JsonTransfer;
-
-                unsigned short asset_code = params.at("asset-code");
-                auto asset = milecsa::assets::TokenFromCode(asset_code);
-
-                float amount = params.at("amount");
-
-                uint64_t trx_id = rand();
-
-                auto request = transfer::CreateRequest(
-                        *ppk,
-                        params.at("to"),
-                        block_id,   // block id
-                        trx_id,     // trx id
-                        asset,      // asset
-                        amount,
-                        0.0,
-                        description,
-                        error_handler)->get_body();
-
-                if (request) {
-
-                    auto json_body = request->dump();
-
-                    if (auto t = send_transaction(*ppk, *request)) {
-                        return std::any_cast<rpc::response>(t);
-                    }
-                }
+                return transfer(this, method, params, error_handler);
 
             } else if (method == "send-emission") {
 
-                static time_t _trx_counter = 0;
-                srand(time(NULL) + _trx_counter++);
+                return emission(this, method, params, error_handler);
 
-                if (params.count("private-key") == 0) {
-                    error_handler(result::NOT_FOUND, ErrorFormat("source private key %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
+            } else if (method == "register-node") {
 
-                if (params.count("asset-code") == 0) {
-                    error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
-                    return std::nullopt;
-                }
-
-                auto block_id = *get_current_block_id();
-
-                auto ppk = milecsa::keys::Pair::FromPrivateKey(params["private-key"], error_handler);
-
-                if (!ppk) {
-                    return std::nullopt;
-                }
-
-                using emission = milecsa::transaction::JsonEmission;
-
-                unsigned short asset_code = params.at("asset-code");
-                auto asset = milecsa::assets::TokenFromCode(asset_code);
-
-                uint64_t trx_id = rand();
-
-                auto request = emission::CreateRequest(
-                        *ppk,
-                        block_id,   // block id
-                        trx_id,     // trx id
-                        asset,      // asset code
-                        0.0,
-                        error_handler)->get_body();
-
-                if (request) {
-
-                    auto json_body = request->dump();
-
-                    if (auto t = send_transaction(*ppk, *request)) {
-                        return std::any_cast<rpc::response>(t);
-                    }
-                }
+                return register_node(this, method, params, error_handler);
 
             }
-            else {
+            else if (method == "unregister-node") {
+
+                return unregister_node(this, method, params, error_handler);
+
+            }else {
+
                 error_handler(result::NOT_FOUND, ErrorFormat("Method %s not found", method.c_str()));
+
             }
         }
-        catch(nlohmann::json::parse_error& e) {
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
+        catch (nlohmann::json::parse_error &e) {
+            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s, %s", method.c_str(), e.what()));
         }
-        catch(nlohmann::json::invalid_iterator& e){
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
-        } catch(nlohmann::json::type_error & e){
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
-        } catch(nlohmann::json::out_of_range& e){
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
-        } catch(nlohmann::json::other_error& e){
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
+        catch (nlohmann::json::invalid_iterator &e) {
+            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s, %s", method.c_str(), e.what()));
+        } catch (nlohmann::json::type_error &e) {
+            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s, %s", method.c_str(), e.what()));
+        } catch (nlohmann::json::out_of_range &e) {
+            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s, %s", method.c_str(), e.what()));
+        } catch (nlohmann::json::other_error &e) {
+            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s, %s", method.c_str(), e.what()));
         }
         catch (...) {
-            error_handler(result::EXCEPTION, ErrorFormat("Parser error: %s", method.c_str()));
+            error_handler(result::EXCEPTION, ErrorFormat("Unknown parser error: %s", method.c_str()));
+        }
+
+        return std::any();
+    }
+
+    static inline uint64_t generate_trx_id() {
+        static time_t _trx_counter = 0;
+        srand(time(NULL) + _trx_counter++);
+        return rand();
+    }
+
+    static inline std::optional<milecsa::keys::Pair> get_private(
+            const std::string &method,
+            const milecsa::rpc::request &params,
+            const ErrorHandler &error_handler){
+
+        if (params.count("private-key") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("source private key %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        return milecsa::keys::Pair::FromPrivateKey(params["private-key"], error_handler);
+    }
+
+    std::any transfer(const Client *client,
+                      const std::string &method,
+                      const milecsa::rpc::request &params,
+                      const ErrorHandler &error_handler) {
+
+        if (params.count("to") == 0) {
+            error_handler(result::NOT_FOUND,
+                          ErrorFormat("destination public key %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+
+        auto ppk = get_private(method,params,error_handler);
+        if (!ppk)  return std::nullopt;
+
+        if (params.count("amount") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("amount %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        float amount = params["amount"];
+
+        if (params.count("asset-code") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        unsigned short asset_code = params["asset-code"];
+
+        std::string description;
+
+        if (params.count("description") > 0) {
+            description = params["description"];
+        }
+
+        auto block_id = *client->get_current_block_id();
+        auto asset = milecsa::assets::TokenFromCode(asset_code);
+
+        auto request = transfer::CreateRequest(
+                *ppk,
+                params["to"],
+                block_id,            // block id
+                generate_trx_id(),   // trx id
+                asset,               // asset
+                amount,
+                0.0,
+                description,
+                error_handler)->get_body();
+
+        if (request) {
+
+            auto json_body = request->dump();
+
+            if (auto t = client->send_transaction(*ppk, *request)) {
+                return std::any_cast<rpc::response>(t);
+            }
+        }
+
+        return std::any();
+    }
+
+    std::any emission(
+            const Client *client,
+            const std::string &method,
+            const milecsa::rpc::request &params,
+            const ErrorHandler &error_handler) {
+
+        auto ppk = get_private(method,params,error_handler);
+        if (!ppk)  return std::nullopt;
+
+        if (params.count("asset-code") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        unsigned short asset_code = params["asset-code"];
+
+        auto block_id = *client->get_current_block_id();
+        auto asset = milecsa::assets::TokenFromCode(asset_code);
+
+        auto request = emission::CreateRequest(
+                *ppk,
+                block_id,          // block id
+                generate_trx_id(), // trx id
+                asset,             // asset code
+                0.0,
+                error_handler)->get_body();
+
+        if (request) {
+
+            auto json_body = request->dump();
+
+            if (auto t = client->send_transaction(*ppk, *request)) {
+                return std::any_cast<rpc::response>(t);
+            }
+        }
+
+        return std::any();
+    }
+
+    std::any register_node(
+            const Client *client,
+            const std::string &method,
+            const milecsa::rpc::request &params,
+            const ErrorHandler &error_handler) {
+
+        auto ppk = get_private(method,params,error_handler);
+        if (!ppk)  return std::nullopt;
+
+        if ( params.count("amount") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("amount %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        float amount = params["amount"];
+
+        if (params.count("address") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("address %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        auto address = params["address"];
+
+        auto block_id = *client->get_current_block_id();
+
+        auto request = node::CreateRegisterRequest(
+                *ppk,
+                address,
+                block_id,
+                generate_trx_id(),
+                amount,
+                0.0,
+                error_handler)->get_body();
+
+        if (request) {
+
+            auto json_body = request->dump();
+
+            if (auto t = client->send_transaction(*ppk, *request)) {
+                return std::any_cast<rpc::response>(t);
+            }
+        }
+
+        return std::any();
+    }
+
+    std::any unregister_node(
+            const Client *client,
+            const std::string &method,
+            const milecsa::rpc::request &params,
+            const ErrorHandler &error_handler) {
+
+        auto ppk = get_private(method,params,error_handler);
+        if (!ppk)  return std::nullopt;
+
+        auto block_id = *client->get_current_block_id();
+
+        auto request = node::CreateUnregisterRequest(
+                *ppk,
+                block_id,
+                generate_trx_id(),
+                0,
+                error_handler)->get_body();
+
+        if (request) {
+
+            auto json_body = request->dump();
+
+            if (auto t = client->send_transaction(*ppk, *request)) {
+                return std::any_cast<rpc::response>(t);
+            }
         }
 
         return std::any();
