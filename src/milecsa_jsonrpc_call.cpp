@@ -9,6 +9,7 @@
 using emission = milecsa::transaction::JsonEmission;
 using transfer = milecsa::transaction::JsonTransfer;
 using node = milecsa::transaction::JsonNode;
+using vote = milecsa::transaction::JsonVote;
 
 namespace milecsa::rpc {
 
@@ -31,6 +32,11 @@ namespace milecsa::rpc {
                                   const std::string &method,
                                   const milecsa::rpc::request &params,
                                   const ErrorHandler &error_handler);
+
+    static std::any vote_for_rate(const Client *client,
+                                    const std::string &method,
+                                    const milecsa::rpc::request &params,
+                                    const ErrorHandler &error_handler);
 
     std::any Client::call(
             const std::string &method,
@@ -114,10 +120,12 @@ namespace milecsa::rpc {
 
                 return unregister_node(this, method, params, error_handler);
 
-            }else {
+            } else if (method == "vote-for-rate") {
 
+                return vote_for_rate(this, method, params, error_handler);
+
+            } else {
                 error_handler(result::NOT_FOUND, ErrorFormat("Method %s not found", method.c_str()));
-
             }
         }
         catch (nlohmann::json::parse_error &e) {
@@ -157,6 +165,20 @@ namespace milecsa::rpc {
         return milecsa::keys::Pair::FromPrivateKey(params["private-key"], error_handler);
     }
 
+    static inline std::optional<milecsa::token> get_asset(
+            const std::string &method,
+            const milecsa::rpc::request &params,
+            const ErrorHandler &error_handler){
+
+
+        if (params.count("asset-code") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        unsigned short asset_code = params["asset-code"];
+        return milecsa::assets::TokenFromCode(asset_code);
+    }
+
     std::any transfer(const Client *client,
                       const std::string &method,
                       const milecsa::rpc::request &params,
@@ -177,11 +199,8 @@ namespace milecsa::rpc {
         }
         float amount = params["amount"];
 
-        if (params.count("asset-code") == 0) {
-            error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
-            return std::nullopt;
-        }
-        unsigned short asset_code = params["asset-code"];
+        auto asset = get_asset(method,params,error_handler);
+        if (!asset)  return std::nullopt;
 
         std::string description;
 
@@ -190,14 +209,13 @@ namespace milecsa::rpc {
         }
 
         auto block_id = *client->get_current_block_id();
-        auto asset = milecsa::assets::TokenFromCode(asset_code);
 
         auto request = transfer::CreateRequest(
                 *ppk,
                 params["to"],
                 block_id,            // block id
                 generate_trx_id(),   // trx id
-                asset,               // asset
+                *asset,              // asset
                 amount,
                 0.0,
                 description,
@@ -224,20 +242,16 @@ namespace milecsa::rpc {
         auto ppk = get_private(method,params,error_handler);
         if (!ppk)  return std::nullopt;
 
-        if (params.count("asset-code") == 0) {
-            error_handler(result::NOT_FOUND, ErrorFormat("asset-code %s not defined", method.c_str()));
-            return std::nullopt;
-        }
-        unsigned short asset_code = params["asset-code"];
+        auto asset = get_asset(method,params,error_handler);
+        if (!asset)  return std::nullopt;
 
         auto block_id = *client->get_current_block_id();
-        auto asset = milecsa::assets::TokenFromCode(asset_code);
 
         auto request = emission::CreateRequest(
                 *ppk,
                 block_id,          // block id
                 generate_trx_id(), // trx id
-                asset,             // asset code
+                *asset,            // asset code
                 0.0,
                 error_handler)->get_body();
 
@@ -312,6 +326,45 @@ namespace milecsa::rpc {
                 *ppk,
                 block_id,
                 generate_trx_id(),
+                0,
+                error_handler)->get_body();
+
+        if (request) {
+
+            auto json_body = request->dump();
+
+            if (auto t = client->send_transaction(*ppk, *request)) {
+                return std::any_cast<rpc::response>(t);
+            }
+        }
+
+        return std::any();
+    }
+
+    static std::any vote_for_rate(const Client *client,
+                                  const std::string &method,
+                                  const milecsa::rpc::request &params,
+                                  const ErrorHandler &error_handler){
+        auto ppk = get_private(method,params,error_handler);
+        if (!ppk)  return std::nullopt;
+
+//        auto asset = get_asset(method,params,error_handler);
+//        if (!asset)  return std::nullopt;
+
+        if (params.count("amount") == 0) {
+            error_handler(result::NOT_FOUND, ErrorFormat("amount %s not defined", method.c_str()));
+            return std::nullopt;
+        }
+        float amount = params["amount"];
+
+        auto block_id = *client->get_current_block_id();
+
+        auto request = vote::CreateRequest(
+                *ppk,
+                block_id,
+                generate_trx_id(),
+                //*asset,
+                amount,
                 0,
                 error_handler)->get_body();
 
