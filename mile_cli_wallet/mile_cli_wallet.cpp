@@ -147,7 +147,10 @@ static bool parse_cmdline(int ac, char *av[]) {
         "\tget-wallet-state --params '{\"public-key\": \"...bHqSm8WTuY3gB9UXD...\"}' \n"\
         "\tget-wallet-transactions --params '{\"public-key\": \"...bHqSm8WTuY3gB9UXD...\"}' \n"\
         "\tsend-transfer --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"to\":\"...pXg1MF4qxZTEsL..\", \"amount\": \"100\", \"asset-code\":0, \"description\":\"send my money back!\"}' \n"\
-         "\tsend-emission --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"asset-code\":0}' \n"\
+        "\tsend-emission --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD...\", \"asset-code\":0}'\n"\
+        "\tregister-node --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD....\", \"amount\": 10000.00, \"address\": \"xxx.yyy.zzz.www\"}'\n"\
+        "\tunregister-node --params '{\"private-key\": \"...bHqSm8WTuY3gB9UXD....\"}'\n"\
+        "\tvote-for-rate -p '{\"private-key\": \"...bHqSm8WTuY3gB9UXD....\", \"amount\": 1.21}'\n"\
         "";
 
         po::variables_map vm;
