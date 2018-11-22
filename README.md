@@ -64,6 +64,11 @@ Methods:
 	vote-for-rate -p '{"private-key": "...bHqSm8WTuY3gB9UXD....", "amount": 1.21}'
 ```
     $ ./mile_cli_wallet -m send-transfer -p '{"private-key": "...", "to": "...", "asset-code": 0, amount:"1000", "description": "0x2039949102"}'
+    
+### Create master node wallet file
+
+    $ ./mile_cli_wallet -o -w random > node.wallet
+    $ scp ./node.wallet root@xxx.yyy.zzz.www:/etc/mile/wallets/
 
 ## Example 
 

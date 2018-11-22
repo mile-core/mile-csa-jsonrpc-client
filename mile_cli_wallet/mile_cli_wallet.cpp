@@ -119,6 +119,9 @@ static bool parse_cmdline(int ac, char *av[]) {
                 ("wallet,w", po::value<std::string>(&wallet_phrase),
                  "create wallet from random (-w \"random\") or secret phrase")
 
+                ("output,o",
+                 "node wallet file output format (-w only)")
+
                 ("url,u", po::value<std::string>(&opt_mile_node_address)->
                          default_value(opt_mile_node_address),
                  "RPC url")
@@ -171,8 +174,11 @@ static bool parse_cmdline(int ac, char *av[]) {
             else {
                 pair = milecsa::keys::Pair::WithSecret(wallet_phrase);
             }
-            std::cout<<"Wallet public key:  " << pair->get_public_key().encode() << std::endl;
-            std::cout<<"       private key: " << pair->get_private_key().encode() << std::endl;
+
+            bool print_mess = vm.count("output");
+
+            std::cout<< (!print_mess ? "Wallet private key: " : "") << pair->get_private_key().encode() << std::endl;
+            std::cout<< (!print_mess ? "        public key: " : "") << pair->get_public_key().encode() << std::endl;
 
             exit(0);
         }
