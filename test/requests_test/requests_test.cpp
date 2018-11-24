@@ -9,7 +9,7 @@
 #include <optional>
 #include <boost/test/included/unit_test.hpp>
 
-std::string node_url = "http://lotus000.testnet.mile.global/v1/api";
+std::string node_url = "https://lotus000.testnet.mile.global/v1/api";
 
 struct RequestsEval {
 
@@ -26,7 +26,13 @@ struct RequestsEval {
     bool getzeroblock(const std::string &u = node_url) {
 
         uint256_t start_position_1(0);
-        auto client_tt = milecsa::rpc::Client::Connect(u,false);
+
+        auto client_tt = milecsa::rpc::Client::Connect(u,false, response_handler, error_handler);
+        if (!client_tt) {
+            BOOST_TEST_MESSAGE(" getzeroblock error ");
+            return false;
+        }
+
         milecsa::rpc::response r = client_tt->get_block(start_position_1);
 
         BOOST_TEST_MESSAGE(" -- ");
@@ -77,6 +83,7 @@ struct RequestsEval {
 
 BOOST_FIXTURE_TEST_CASE( requests, RequestsEval )
 {
+    milecsa::rpc::Client::timeout = 20;
     BOOST_CHECK(test());
     BOOST_CHECK(getzeroblock());
 }

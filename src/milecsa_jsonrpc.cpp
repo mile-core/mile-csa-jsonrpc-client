@@ -5,7 +5,7 @@
 
 namespace milecsa::rpc {
 
-    bool detail::RpcSession::debug_on = false;
+    time_t Client::timeout = 3;
 
     using namespace boost::asio::ip;
     namespace ssl = boost::asio::ssl;
@@ -61,9 +61,14 @@ namespace milecsa::rpc {
                         url_->get_port(),
                         url_->get_path(),
                         url_->get_protocol(),
-                        verify_ssl)
-        );
+                        verify_ssl,
+                        Client::timeout));
     }
+
+    Client::~Client(){
+        session.reset();
+    };
+
 
     std::optional<time_t> Client::ping() const {
         auto start = std::chrono::high_resolution_clock::now();

@@ -102,7 +102,8 @@ namespace milecsa {
                            uint64_t port,
                            const std::string &target,
                            Url::protocol protocol,
-                           bool verify = true);
+                           bool verify = true,
+                           time_t timeout = 3);
 
                 /**
                  * Prepare rpc session connection
@@ -135,7 +136,7 @@ namespace milecsa {
                  * @param params - json-rpc  method prarameters
                  * @return a new rpc request body
                  */
-                 rpc::request next_command(const std::string &method, const rpc::request &params = {}) const;
+                rpc::request next_command(const std::string &method, const rpc::request &params = {}) const;
 
                 ~RpcSession();
 
@@ -146,6 +147,7 @@ namespace milecsa {
                 const std::string host;
                 const std::string port;
                 const std::string target;
+                time_t timeout;
 
                 boost::asio::io_context ioc;
                 tcp::resolver *resolver;

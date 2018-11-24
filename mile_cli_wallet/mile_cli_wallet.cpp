@@ -13,6 +13,7 @@ static std::string opt_method= "";
 static std::string opt_method_params = "{}";
 static int opt_reconnections = 3;
 static time_t opt_timeout = 3;
+static time_t opt_read_timeout = 5;
 
 namespace po = boost::program_options;
 
@@ -137,6 +138,10 @@ static bool parse_cmdline(int ac, char *av[]) {
                 ("reconnections,r", po::value<int>(&opt_reconnections)->
                          default_value(opt_reconnections),
                  "try to connect again reconnection times if any connection error occurred")
+
+                ("timeout,t", po::value<time_t>(&opt_read_timeout)->
+                         default_value(opt_reconnections),
+                 "connection/read timeout in seconds")
                 ;
 
         std::string ext = ""\
@@ -192,6 +197,8 @@ static bool parse_cmdline(int ac, char *av[]) {
         if (vm.count("debug")) {
             milecsa::rpc::detail::RpcSession::debug_on = true;
         }
+
+        milecsa::rpc::Client::timeout = opt_read_timeout;
     }
 
     catch (std::exception &e) {

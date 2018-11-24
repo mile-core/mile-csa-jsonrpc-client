@@ -3,17 +3,25 @@
 //
 
 #include "milecsa_rpc_session.hpp"
+#include <optional>
 
 namespace milecsa::rpc::detail {
 
+    bool detail::RpcSession::debug_on = false;
+
+    using loop_result = std::optional<boost::system::error_code>;
+    using deadline_timer = boost::asio::deadline_timer;
+
     RpcSession::RpcSession(const std::string &host,
-               uint64_t port,
-               const std::string &target,
-               Url::protocol protocol,
-               bool verify):
+                           uint64_t port,
+                           const std::string &target,
+                           Url::protocol protocol,
+                           bool verify,
+                           time_t timeout):
 
             use_ssl(protocol == Url::protocol::https),
             verify_ssl(verify),
+            timeout(timeout),
 
             host(host),
             port(boost::to_string(port)),
@@ -65,6 +73,51 @@ namespace milecsa::rpc::detail {
                 return false;
             }
 
+            deadline_timer timer(use_ssl ? stream->get_io_service() : socket->get_io_service());
+
+            loop_result connection_result;
+            loop_result timer_result;
+
+            auto timer_setup = [&](){
+                connection_result.reset();
+                timer_result.reset();
+
+                timer.expires_from_now(boost::posix_time::seconds(timeout));
+                timer.async_wait([&timer_result] (const boost::system::error_code& error) {
+                    timer_result = std::make_optional(error); });
+            };
+
+            auto timeout_loop = [&]{
+                if (use_ssl)
+                    stream->get_io_service().reset();
+                else
+                    socket->get_io_service().reset();
+
+                while ( (use_ssl ? stream->get_io_service().run_one() : socket->get_io_service().run_one()) )
+                {
+                    if (connection_result)
+                        timer.cancel();
+                    else if (timer_result){
+                        error(result::TIMEOUT,ErrorFormat("%s: %s:%s",
+                                                          "Connection timeout", host.c_str(), port.c_str()));
+                        if (use_ssl)
+                            stream->next_layer().cancel();
+                        else
+                            socket->cancel();
+
+                        return false;
+                    }
+                }
+
+                if (*connection_result){
+                    error(result::FAIL,ErrorFormat("%s: %s:%s",
+                                                   boost::system::system_error(*connection_result).what(), host.c_str(), port.c_str()));
+                    return false;
+                }
+
+                return true;
+            };
+
             if (use_ssl) {
 
                 stream->set_verify_callback([&](bool preverified,
@@ -78,25 +131,50 @@ namespace milecsa::rpc::detail {
                     return false;
                 }
                 try {
-                    boost::asio::connect(stream->next_layer(), results.begin(), results.end());
-                    stream->handshake(ssl::stream_base::client);
+
+                    timer_setup();
+
+                    stream->next_layer().async_connect(results->endpoint(),
+                            [&connection_result](const boost::system::error_code& error){
+                                connection_result = std::make_optional(error);
+                    });
+
+                    if (!timeout_loop())
+                        return false;
+
+                    timer_setup();
+
+                    stream->async_handshake(ssl::stream_base::client,
+                            [&connection_result](const boost::system::error_code& error){
+                        connection_result = std::make_optional(error);
+                    });
+
+                    return timeout_loop();
                 }
                 catch(std::exception const& e)
                 {
                     error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
                     return false;
                 }
+                catch(boost::system::system_error const& e)
+                {
+                    error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
+                    return false;
+                }
             }
             else {
-                boost::asio::connect(*socket, results.begin(), results.end());
+                timer_setup();
+                socket->async_connect(results->endpoint(),
+                                      [&connection_result](const boost::system::error_code& error){
+                                          connection_result = std::make_optional(error);
+                                      });
+                return timeout_loop();
             }
         }
         catch (std::exception const& e) {
             error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
             return false;
         }
-        
-        return true;
     }
 
 
@@ -107,9 +185,9 @@ namespace milecsa::rpc::detail {
             delete socket;
         }
         if (stream) {
-            boost::system::error_code ec;
-            stream->shutdown(ec);
-            delete stream;
+            stream->async_shutdown([this](const boost::system::error_code&){
+                delete stream;
+            });
         }
         if (resolver) {
             delete resolver;
@@ -117,12 +195,59 @@ namespace milecsa::rpc::detail {
     }
 
     rpc::response RpcSession::request(const rpc::request &body,
-                          const http::ResponseHandler &response_fail_handler,
-                          const milecsa::ErrorHandler &error_handler) {
+                                      const http::ResponseHandler &response_fail_handler,
+                                      const milecsa::ErrorHandler &error_handler) {
 
         boost::beast::http::request<boost::beast::http::string_body> req;
 
         try {
+
+            deadline_timer timer(use_ssl ? stream->get_io_service() : socket->get_io_service());
+
+            loop_result connection_result;
+            loop_result timer_result;
+
+            auto timer_setup = [&](){
+                connection_result.reset();
+                timer_result.reset();
+
+                timer.expires_from_now(boost::posix_time::seconds(timeout));
+                timer.async_wait([&timer_result] (const boost::system::error_code& error) {
+                    timer_result = std::make_optional(error); });
+            };
+
+            auto timeout_loop = [&]{
+                if (use_ssl)
+                    stream->get_io_service().reset();
+                else
+                    socket->get_io_service().reset();
+
+                while ( (use_ssl ? stream->get_io_service().run_one() : socket->get_io_service().run_one()) )
+                {
+                    if (connection_result)
+                        timer.cancel();
+
+                    else if (timer_result){
+                        error_handler(result::TIMEOUT,ErrorFormat("%s: %s:%s",
+                                                          "Connection timeout", host.c_str(), port.c_str()));
+                        if (use_ssl)
+                            stream->next_layer().cancel();
+                        else
+                            socket->cancel();
+
+                        return false;
+                    }
+                }
+
+                if (*connection_result){
+                    error_handler(result::FAIL,ErrorFormat("%s: %s:%s",
+                                                   boost::system::system_error(*connection_result).what(), host.c_str(), port.c_str()));
+                    return false;
+                }
+
+                return true;
+            };
+
             // Set up an HTTP GET request message
             req.version(11);
             req.method(boost::beast::http::verb::post);
@@ -142,20 +267,41 @@ namespace milecsa::rpc::detail {
                 std::cerr << "..." << std::endl;
             }
 
+            timer_setup();
+
             if (use_ssl) {
-                boost::beast::http::write(*stream, req);
+                boost::beast::http::async_write(*stream, req, [&connection_result](const boost::system::error_code& error, size_t){
+                    connection_result = std::make_optional(error);
+                });
+
             } else {
-                boost::beast::http::write(*socket, req);
+                boost::beast::http::async_write(*socket, req, [&connection_result](const boost::system::error_code& error, size_t){
+                    connection_result = std::make_optional(error);
+                });
             }
+
+            if (!timeout_loop())
+                return false;
 
             boost::beast::flat_buffer buffer;
             boost::beast::http::response<boost::beast::http::string_body> res;
 
+            timer_setup();
+
             if (use_ssl) {
-                boost::beast::http::read(*stream, buffer, res);
+
+                boost::beast::http::async_read(*stream, buffer, res, [&connection_result](const boost::system::error_code& error, size_t){
+                    connection_result = std::make_optional(error);
+                });
+
             } else {
-                boost::beast::http::read(*socket, buffer, res);
+                boost::beast::http::async_read(*socket, buffer, res, [&connection_result](const boost::system::error_code& error, size_t){
+                    connection_result = std::make_optional(error);
+                });
             }
+
+            if (!timeout_loop())
+                return false;
 
             auto status = res.result();
 

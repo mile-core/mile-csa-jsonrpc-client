@@ -25,6 +25,8 @@ namespace milecsa {
 
         public:
 
+            static time_t timeout;
+
             /**
              * Create MILE json-rpc client controller
              * @param urlString - MILE node runs on json-rpcd mode
@@ -40,7 +42,8 @@ namespace milecsa {
                     const ErrorHandler &error_handler = default_error_handler);
 
             Client(const Client &client);
-            ~Client(){};
+
+            ~Client();
 
             /**
              * Get the current url
