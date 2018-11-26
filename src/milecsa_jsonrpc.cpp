@@ -10,10 +10,10 @@ namespace milecsa::rpc {
     using namespace boost::asio::ip;
     namespace ssl = boost::asio::ssl;
 
-    Client& Client::operator=(const Client& client) {
+    Client& Client::operator = (const Client& client) {
         url_ = client.url_;
         verify_ssl_=client.verify_ssl_;
-        session=client.session;
+        session=std::move(client.session);
         response_fail_handler=client.response_fail_handler;
         error_handler=client.error_handler;
         return *this;
@@ -22,7 +22,7 @@ namespace milecsa::rpc {
     Client::Client(const milecsa::rpc::Client &client):
             url_(client.url_),
             verify_ssl_(client.verify_ssl_),
-            session(client.session),
+            session(std::move(client.session)),
             response_fail_handler(client.response_fail_handler),
             error_handler(client.error_handler){}
 
@@ -39,7 +39,7 @@ namespace milecsa::rpc {
                 return std::nullopt;
             }
 
-            return client;
+            return std::move(client);
         }
         return std::nullopt;
     }

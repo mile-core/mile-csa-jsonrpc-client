@@ -183,14 +183,17 @@ namespace milecsa::rpc::detail {
             boost::system::error_code ec;
             socket->shutdown(tcp::socket::shutdown_both, ec);
             delete socket;
+            socket = 0;
         }
         if (stream) {
-            stream->async_shutdown([this](const boost::system::error_code&){
-                delete stream;
-            });
+            boost::system::error_code ec;
+            stream->shutdown(ec);
+            delete stream;
+            stream = 0;
         }
         if (resolver) {
             delete resolver;
+            resolver = 0;
         }
     }
 
