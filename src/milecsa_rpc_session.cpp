@@ -322,7 +322,27 @@ namespace milecsa::rpc::detail {
         }
         catch(std::exception const& e)
         {
-            error_handler(result::FAIL,ErrorFormat("%s: %s:%s", e.what() , host.c_str(), port.c_str()));
+            error_handler(result::FAIL,ErrorFormat("json-rpc request: %s: %s:%s", e.what() , host.c_str(), port.c_str()));
+            return std::nullopt;
+        }
+        catch(nlohmann::json::parse_error& e) {
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: parse error: %s", e.what()));
+            return std::nullopt;
+        }
+        catch(nlohmann::json::invalid_iterator& e){
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: invalid iterator error: %s", e.what()));
+            return std::nullopt;
+        } catch(nlohmann::json::type_error & e){
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: type error: %s", e.what()));            return std::nullopt;
+        } catch(nlohmann::json::out_of_range& e){
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: out of range error: %s", e.what()));
+            return std::nullopt;
+        } catch(nlohmann::json::other_error& e){
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: other error: %s", e.what()));
+            return std::nullopt;
+        }
+        catch (...) {
+            error_handler(milecsa::result::EXCEPTION, ErrorFormat("json-rpc request: unknown error"));
             return std::nullopt;
         }
     }
