@@ -3,7 +3,10 @@
 //
 
 #include "milecsa_rpc_session.hpp"
+
 #include <optional>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 
 namespace milecsa::rpc::detail {
 
@@ -27,21 +30,16 @@ namespace milecsa::rpc::detail {
             port(boost::to_string(port)),
             target(target),
 
-            resolver(0),
             socket(0),
-            stream(0) {
+            stream(0),
+            deadline(ioc){
         prepare();
     }
 
-    bool RpcSession::reconnect(const milecsa::ErrorHandler &error) {
-        if (prepare()){
-            return connect(error);
-        }
-        return false;
-    }
-
     bool RpcSession::prepare() {
+
         if (use_ssl){
+
             ssl::context ctx{ssl::context::tls_client};
             ctx.set_options(ssl::context::sslv23_client|ssl::context::tlsv12_client);
 
@@ -58,65 +56,54 @@ namespace milecsa::rpc::detail {
             socket = new tcp::socket(ioc);
         }
 
-        resolver = new tcp::resolver(ioc);
+        wait_deadline();
 
-        return  resolver != nullptr;
+        return  socket != nullptr || stream != nullptr;
+    }
+
+    void RpcSession::wait_deadline(){
+
+        if (deadline.expires_at() <= deadline_timer::traits_type::now())
+        {
+            boost::system::error_code ignored_ec;
+
+            if (use_ssl && stream)
+                stream->next_layer().close(ignored_ec);
+            else if (socket) {
+                socket->close(ignored_ec);
+            }
+
+            deadline.expires_at(boost::posix_time::pos_infin);
+        }
+        deadline.async_wait(boost::lambda::bind(&RpcSession::wait_deadline, this));
+    }
+
+    bool RpcSession::check_socket(){
+
+        if (use_ssl && stream)
+            return  stream->next_layer().is_open();
+        else if (socket)
+            return socket->is_open();
+
+        return false;
     }
 
     bool RpcSession::connect(const milecsa::ErrorHandler &error) {
 
         try {
-            auto const results = resolver->resolve(host, port);
+            auto const results = tcp::resolver(ioc).resolve(host, port);
 
             if (results.empty()) {
                 error(result::NOT_FOUND,ErrorFormat("Host %s:%s not found", host.c_str(), port.c_str()));
                 return false;
             }
 
-            deadline_timer timer(use_ssl ? stream->get_io_service() : socket->get_io_service());
+            boost::posix_time::time_duration tm = boost::posix_time::seconds(timeout);
 
-            loop_result connection_result;
-            loop_result timer_result;
+            deadline.expires_from_now(tm);
 
-            auto timer_setup = [&](){
-                connection_result.reset();
-                timer_result.reset();
-
-                timer.expires_from_now(boost::posix_time::seconds(timeout));
-                timer.async_wait([&timer_result] (const boost::system::error_code& error) {
-                    timer_result = std::make_optional(error); });
-            };
-
-            auto timeout_loop = [&]{
-                if (use_ssl)
-                    stream->get_io_service().reset();
-                else
-                    socket->get_io_service().reset();
-
-                while ( (use_ssl ? stream->get_io_service().run_one() : socket->get_io_service().run_one()) )
-                {
-                    if (connection_result)
-                        timer.cancel();
-                    else if (timer_result){
-                        error(result::TIMEOUT,ErrorFormat("%s: %s:%s",
-                                                          "Connection timeout", host.c_str(), port.c_str()));
-                        if (use_ssl)
-                            stream->next_layer().cancel();
-                        else
-                            socket->cancel();
-
-                        return false;
-                    }
-                }
-
-                if (*connection_result){
-                    error(result::FAIL,ErrorFormat("%s: %s:%s",
-                                                   boost::system::system_error(*connection_result).what(), host.c_str(), port.c_str()));
-                    return false;
-                }
-
-                return true;
-            };
+            boost::system::error_code ec = boost::asio::error::would_block;
+            std::string stage = "Connection timeout";
 
             if (use_ssl) {
 
@@ -132,24 +119,28 @@ namespace milecsa::rpc::detail {
                 }
                 try {
 
-                    timer_setup();
+                    boost::asio::async_connect(
+                            stream->next_layer(),
+                            results, boost::lambda::var(ec) = boost::lambda::_1);
 
-                    stream->next_layer().async_connect(results->endpoint(),
-                            [&connection_result](const boost::system::error_code& error){
-                                connection_result = std::make_optional(error);
-                    });
+                    do ioc.run_one(); while (ec == boost::asio::error::would_block);
 
-                    if (!timeout_loop())
+                    if (ec || !check_socket()) {
+                        error(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                           stage.c_str(),
+                                                           boost::system::system_error(
+                                                                   ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                           host.c_str(), port.c_str()));
                         return false;
+                    }
 
-                    timer_setup();
+                    stage = "SSL Handshake timeout";
 
-                    stream->async_handshake(ssl::stream_base::client,
-                            [&connection_result](const boost::system::error_code& error){
-                        connection_result = std::make_optional(error);
-                    });
+                    deadline.expires_from_now(tm);
+                    ec = boost::asio::error::would_block;
 
-                    return timeout_loop();
+                    stream->async_handshake(ssl::stream_base::client, boost::lambda::var(ec) = boost::lambda::_1);
+
                 }
                 catch(std::exception const& e)
                 {
@@ -163,22 +154,37 @@ namespace milecsa::rpc::detail {
                 }
             }
             else {
-                timer_setup();
-                socket->async_connect(results->endpoint(),
-                                      [&connection_result](const boost::system::error_code& error){
-                                          connection_result = std::make_optional(error);
-                                      });
-                return timeout_loop();
+                boost::asio::async_connect(
+                        *socket,
+                        results, boost::lambda::var(ec) = boost::lambda::_1);
+            }
+
+            do ioc.run_one(); while (ec == boost::asio::error::would_block);
+
+            if (ec || !check_socket()) {
+                error(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                   stage.c_str(),
+                                                   boost::system::system_error(
+                                                           ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                   host.c_str(), port.c_str()));
+                return false;
             }
         }
         catch (std::exception const& e) {
             error(result::FAIL,ErrorFormat("%s: %s:%s", e.what(), host.c_str(), port.c_str()));
             return false;
         }
+        catch (...) {
+            error(result::FAIL,ErrorFormat("Unknown error: %s:%s", host.c_str(), port.c_str()));
+            return false;
+        }
+
+        return true;
     }
 
 
     RpcSession::~RpcSession(){
+
         if(socket) {
             boost::system::error_code ec;
             socket->shutdown(tcp::socket::shutdown_both, ec);
@@ -191,10 +197,7 @@ namespace milecsa::rpc::detail {
             delete stream;
             stream = 0;
         }
-        if (resolver) {
-            delete resolver;
-            resolver = 0;
-        }
+        ioc.stop();
     }
 
     rpc::response RpcSession::request(const rpc::request &body,
@@ -205,51 +208,8 @@ namespace milecsa::rpc::detail {
 
         try {
 
-            deadline_timer timer(use_ssl ? stream->get_io_service() : socket->get_io_service());
-
-            loop_result connection_result;
-            loop_result timer_result;
-
-            auto timer_setup = [&](){
-                connection_result.reset();
-                timer_result.reset();
-
-                timer.expires_from_now(boost::posix_time::seconds(timeout));
-                timer.async_wait([&timer_result] (const boost::system::error_code& error) {
-                    timer_result = std::make_optional(error); });
-            };
-
-            auto timeout_loop = [&]{
-                if (use_ssl)
-                    stream->get_io_service().reset();
-                else
-                    socket->get_io_service().reset();
-
-                while ( (use_ssl ? stream->get_io_service().run_one() : socket->get_io_service().run_one()) )
-                {
-                    if (connection_result)
-                        timer.cancel();
-
-                    else if (timer_result){
-                        error_handler(result::TIMEOUT,ErrorFormat("%s: %s:%s",
-                                                          "Connection timeout", host.c_str(), port.c_str()));
-                        if (use_ssl)
-                            stream->next_layer().cancel();
-                        else
-                            socket->cancel();
-
-                        return false;
-                    }
-                }
-
-                if (*connection_result){
-                    error_handler(result::FAIL,ErrorFormat("%s: %s:%s",
-                                                   boost::system::system_error(*connection_result).what(), host.c_str(), port.c_str()));
-                    return false;
-                }
-
-                return true;
-            };
+            boost::posix_time::time_duration tm = boost::posix_time::seconds(timeout);
+            boost::system::error_code ec = boost::asio::error::would_block;
 
             // Set up an HTTP GET request message
             req.version(11);
@@ -270,48 +230,64 @@ namespace milecsa::rpc::detail {
                 std::cerr << "..." << std::endl;
             }
 
-            timer_setup();
+            deadline.expires_from_now(tm);
 
             if (use_ssl) {
-                boost::beast::http::async_write(*stream, req, [&connection_result](const boost::system::error_code& error, size_t){
-                    connection_result = std::make_optional(error);
+                boost::beast::http::async_write(*stream, req, [&ec](const boost::system::error_code& error, size_t){
+                    ec = error;
                 });
-
             } else {
-                boost::beast::http::async_write(*socket, req, [&connection_result](const boost::system::error_code& error, size_t){
-                    connection_result = std::make_optional(error);
+                boost::beast::http::async_write(*socket, req, [&ec](const boost::system::error_code& error, size_t){
+                    ec = error;
                 });
             }
 
-            if (!timeout_loop())
+            do ioc.run_one(); while (ec == boost::asio::error::would_block);
+
+            if (ec || !check_socket()) {
+                error_handler(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                   "Sending request timeout",
+                                                   boost::system::system_error(
+                                                           ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                   host.c_str(), port.c_str()));
                 return false;
+            }
 
             boost::beast::flat_buffer buffer;
             boost::beast::http::response<boost::beast::http::string_body> res;
 
-            timer_setup();
+            deadline.expires_from_now(tm);
+            ec = boost::asio::error::would_block;
 
             if (use_ssl) {
-
-                boost::beast::http::async_read(*stream, buffer, res, [&connection_result](const boost::system::error_code& error, size_t){
-                    connection_result = std::make_optional(error);
+                boost::beast::http::async_read(*stream, buffer, res, [&ec](const boost::system::error_code& error, size_t){
+                    ec = error;
                 });
-
             } else {
-                boost::beast::http::async_read(*socket, buffer, res, [&connection_result](const boost::system::error_code& error, size_t){
-                    connection_result = std::make_optional(error);
+                boost::beast::http::async_read(*socket, buffer, res,  [&ec](const boost::system::error_code& error, size_t){
+                    ec = error;
                 });
             }
 
-            if (!timeout_loop())
+            do ioc.run_one(); while (ec == boost::asio::error::would_block);
+
+            if (ec || !check_socket()) {
+                error_handler(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                           "Reading response timeout",
+                                                           boost::system::system_error(
+                                                                   ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                           host.c_str(), port.c_str()));
                 return false;
+            }
 
             auto status = res.result();
 
             if (RpcSession::debug_on) {
                 std::cerr << "\nResponse info: " << status << std::endl;
                 std::cerr << res << std::endl;
-                std::cerr << "..." << std::endl;
+                std::cerr << " ------- " << std::endl;
+                std::cerr << res.body() << std::endl;
+                std::cerr << " ------- " << std::endl;
             }
             if (status == boost::beast::http::status::ok) {
                 auto json = json::parse(res.body().data());

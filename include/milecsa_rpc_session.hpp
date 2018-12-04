@@ -113,13 +113,6 @@ namespace milecsa {
                 bool connect(const milecsa::ErrorHandler &error);
 
                 /**
-                 * Reconnect session in handle error
-                 * @param error
-                 * @return
-                 */
-                bool reconnect(const milecsa::ErrorHandler &error) ;
-
-                /**
                  * Send JSON-RPC request width request body
                  * @param body - body of json repc request
                  * @param response_fail_handler - response fail handler
@@ -150,11 +143,14 @@ namespace milecsa {
                 time_t timeout;
 
                 boost::asio::io_context ioc;
-                tcp::resolver *resolver;
                 tcp::socket   *socket;
                 ssl::stream<tcp::socket> *stream;
 
+                boost::asio::deadline_timer deadline;
+
                 bool prepare();
+                void wait_deadline();
+                bool check_socket();
             };
         }
     }
