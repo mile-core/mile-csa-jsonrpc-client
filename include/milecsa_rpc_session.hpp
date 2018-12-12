@@ -27,6 +27,8 @@ namespace milecsa {
 
     namespace http {
 
+        using Url = milecsa::rpc::Url;
+
         typedef boost::beast::http::status status;
 
         /**
@@ -37,12 +39,172 @@ namespace milecsa {
         /**
          * JSON-RPC HTTP response fail handler
          */
-        typedef std::function<void(const status code, const std::string &method, const response &response)> ResponseHandler;
+        typedef std::function<void(const status code, const std::string &method,
+                                   const response &response)> ResponseHandler;
 
         /**
          * Default response fail handler
          */
-        static auto default_response_handler = [](const status code, const std::string &method, const response &response) {};
+        static auto default_response_handler = [](const status code, const std::string &method,
+                                                  const response &response) {};
+
+        using namespace boost::asio::ip;
+        namespace ssl = boost::asio::ssl;
+
+        class Session {
+        public:
+            /**
+             * Create single JSON-RPC over HTTP/HTTPS session
+             *
+             * @param host - json-rpc host
+             * @param port - http/s port
+             * @param target - target path
+             * @param protocol - protocol, supported http or https
+             * @param verify - verify ssl certs
+             */
+            Session(const std::string &host,
+                    uint64_t port,
+                    const std::string &target,
+                    Url::protocol protocol,
+                    bool verify = true,
+                    time_t timeout = 3);
+
+
+            /**
+             * Prepare rpc session connection
+             * @param error
+             * @return false in case when conection failed
+             */
+            bool connect(const milecsa::ErrorHandler &error);
+
+            /**
+             * Get the current uri target
+             * @return string
+             */
+            const std::string &get_target() const { return target;}
+
+            /**
+             * Get the current host
+             * @return string
+             */
+            const std::string &get_host() const { return host;}
+
+            /**
+             * Get the current port
+             * @return string
+             */
+            const std::string &get_port() const { return port;}
+
+            /**
+             * Get the current operations timeout
+             * @return time
+             */
+            time_t get_timeout() const { return timeout;}
+
+            /**
+             * Write request body
+             * @tparam T
+             * @param body - body of request
+             * @param error_handler
+             * @return true if operation is completed successfully
+             */
+            template<typename T>
+            bool write(T &req,
+                       const milecsa::ErrorHandler &error_handler){
+
+                boost::posix_time::time_duration tm = boost::posix_time::seconds(get_timeout());
+                boost::system::error_code ec = boost::asio::error::would_block;
+
+                deadline.expires_from_now(tm);
+
+                if (use_ssl) {
+                    boost::beast::http::async_write(*stream, req, [&ec](const boost::system::error_code& error, size_t){
+                        ec = error;
+                    });
+                } else {
+                    boost::beast::http::async_write(*socket, req, [&ec](const boost::system::error_code& error, size_t){
+                        ec = error;
+                    });
+                }
+
+                do ioc.run_one(); while (ec == boost::asio::error::would_block);
+
+                if (ec || !check_socket()) {
+                    error_handler(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                               "Sending request timeout",
+                                                               boost::system::system_error(
+                                                                       ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                               host.c_str(), port.c_str()));
+                    return false;
+                }
+
+                return true;
+            };
+
+            /**
+             * Read response
+             * @tparam T
+             * @param response - response message
+             * @param error_handler
+             * @return true if operation is completed successfully
+             */
+            template<typename T>
+            bool read(T &response,
+                      const milecsa::ErrorHandler &error_handler){
+
+                boost::posix_time::time_duration tm = boost::posix_time::seconds(get_timeout());
+                boost::system::error_code ec = boost::asio::error::would_block;
+
+                boost::beast::flat_buffer buffer;
+
+                deadline.expires_from_now(tm);
+                ec = boost::asio::error::would_block;
+
+                if (use_ssl) {
+                    boost::beast::http::async_read(*stream, buffer, response, [&ec](const boost::system::error_code& error, size_t){
+                        ec = error;
+                    });
+                } else {
+                    boost::beast::http::async_read(*socket, buffer, response,  [&ec](const boost::system::error_code& error, size_t){
+                        ec = error;
+                    });
+                }
+
+                do ioc.run_one(); while (ec == boost::asio::error::would_block);
+
+                if (ec || !check_socket()) {
+                    error_handler(result::TIMEOUT, ErrorFormat("%s %s: %s:%s",
+                                                               "Reading response timeout",
+                                                               boost::system::system_error(
+                                                                       ec ? ec : boost::asio::error::operation_aborted).what(),
+                                                               host.c_str(), port.c_str()));
+                    return false;
+                }
+
+                return true;
+            };
+
+            ~Session();
+
+        private:
+            bool use_ssl;
+            bool verify_ssl;
+
+            const std::string host;
+            const std::string port;
+            const std::string target;
+            time_t timeout;
+
+            boost::asio::io_context ioc;
+            tcp::socket   *socket;
+            ssl::stream<tcp::socket> *stream;
+
+            boost::asio::deadline_timer deadline;
+
+            bool prepare();
+            void wait_deadline();
+            bool check_socket();
+        };
     }
 
     namespace rpc {
@@ -80,7 +242,7 @@ namespace milecsa {
             /**
              * Rpc session object
              */
-            class RpcSession {
+            class RpcSession: public milecsa::http::Session {
 
             public:
 
@@ -110,7 +272,7 @@ namespace milecsa {
                  * @param error
                  * @return false in case when conection failed
                  */
-                bool connect(const milecsa::ErrorHandler &error);
+                //bool connect(const milecsa::ErrorHandler &error);
 
                 /**
                  * Send JSON-RPC request width request body
@@ -132,25 +294,6 @@ namespace milecsa {
                 rpc::request next_command(const std::string &method, const rpc::request &params = {}) const;
 
                 ~RpcSession();
-
-            private:
-                bool use_ssl;
-                bool verify_ssl;
-
-                const std::string host;
-                const std::string port;
-                const std::string target;
-                time_t timeout;
-
-                boost::asio::io_context ioc;
-                tcp::socket   *socket;
-                ssl::stream<tcp::socket> *stream;
-
-                boost::asio::deadline_timer deadline;
-
-                bool prepare();
-                void wait_deadline();
-                bool check_socket();
             };
         }
     }
