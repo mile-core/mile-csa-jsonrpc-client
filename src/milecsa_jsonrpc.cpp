@@ -19,7 +19,7 @@ namespace milecsa::rpc {
         return *this;
     }
 
-    Client::Client(const milecsa::rpc::Client &client):
+    Client::Client(const Client &client):
             url_(client.url_),
             verify_ssl_(client.verify_ssl_),
             session(std::move(client.session)),
