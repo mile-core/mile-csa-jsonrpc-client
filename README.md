@@ -230,7 +230,7 @@ Content-Type: application/json
 {"jsonrpc":"2.0","version":"1.0","id":1,
 "result":{"project":"Mile",
 "version":"1",
-"supported-transaction-types":["RegisterNodeTransactionWithAmount","UnregisterNodeTransaction","TransferAssetsTransaction","CreatePollSetTokenCourse","VotingCoursePoll","VotingCourseCount","EmissionTransaction"],
+"supported-transaction-types":["RegisterNodeTransactionWithAmount","UnregisterNodeTransaction","TransferAssetsTransaction","CreatePollSetTokenCourse","VotingCoursePoll","VotingCourseCount"],
 "supported-assets":[{"name":"XDR tokens","code":0},
 {"name":"Mile tokens","code":1}]}}
 ```
