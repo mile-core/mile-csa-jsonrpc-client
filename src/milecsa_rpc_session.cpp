@@ -242,7 +242,6 @@ namespace milecsa::rpc::detail {
                 std::cerr << "..." << std::endl;
             }
 
-
             if (!write(req,error_handler))
                 return std::nullopt;
 

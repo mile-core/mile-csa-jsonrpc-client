@@ -6,7 +6,9 @@
 #include "milecsa_rpc_id.hpp"
 #include "mile_crypto.h"
 
+#ifdef __MILE_SUPPORTS_EMISSION__
 using emission = milecsa::transaction::JsonEmission;
+#endif
 using transfer = milecsa::transaction::JsonTransfer;
 using node = milecsa::transaction::JsonNode;
 using vote = milecsa::transaction::JsonVote;
@@ -18,10 +20,13 @@ namespace milecsa::rpc {
                              const milecsa::rpc::request &params,
                              const ErrorHandler &error_handler);
 
+#ifdef __MILE_SUPPORTS_EMISSION__
+
     static std::any emission(const Client *client,
                              const std::string &method,
                              const milecsa::rpc::request &params,
                              const ErrorHandler &error_handler);
+#endif
 
     static std::any register_node(const Client *client,
                                   const std::string &method,
@@ -107,11 +112,16 @@ namespace milecsa::rpc {
 
                 return transfer(this, method, params, error_handler);
 
-            } else if (method == "send-emission") {
+            }
+#ifdef __MILE_SUPPORTS_EMISSION__
+
+            else if (method == "send-emission") {
 
                 return emission(this, method, params, error_handler);
 
-            } else if (method == "register-node") {
+            }
+#endif
+            else if (method == "register-node") {
 
                 return register_node(this, method, params, error_handler);
 
@@ -233,6 +243,8 @@ namespace milecsa::rpc {
         return std::any();
     }
 
+#ifdef __MILE_SUPPORTS_EMISSION__
+
     std::any emission(
             const Client *client,
             const std::string &method,
@@ -266,7 +278,7 @@ namespace milecsa::rpc {
 
         return std::any();
     }
-
+#endif
     std::any register_node(
             const Client *client,
             const std::string &method,
